@@ -8,5 +8,5 @@ Usage
 =====
 
     % virtualenv py
-    % py/bin/pip instlal bitstring
+    % py/bin/pip install bitstring
     % py/bin/python bufr2json.py <templatefile> <bufrfile>
