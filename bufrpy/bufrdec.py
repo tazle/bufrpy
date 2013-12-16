@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import itertools
 from bitstring import ConstBitStream, Bits
 from collections import namedtuple, defaultdict
 import re
+import codecs
 
 # Decoder for RDT BUFR files
 
@@ -19,6 +22,8 @@ class ByteStream(object):
         else:
             raise StopIteration
 
+    __next__ = next
+
 class ReadableStream(object):
     def __init__(self, stream):
         self.stream = stream
@@ -26,11 +31,11 @@ class ReadableStream(object):
     def readstr(self, n):
         """ Read n bytes as CCITT IA5 String """
         # TODO CCITT IA5 rather than ASCII
-        return "".join(itertools.islice(self.stream, n))
+        return b"".join(itertools.islice(self.stream, n)).decode('iso-8859-1')
 
     def readbytes(self, n):
-        """ Read n bytes as bytes """
-        return list(itertools.islice(self.stream, n))
+        """ Read n bytes as list of ints """
+        return list(ord(x) for x in itertools.islice(self.stream, n))
 
     def readint(self, n):
         """ Read n-byte big-endian integer """
@@ -157,7 +162,7 @@ def decode_section3_v3(stream, descriptor_table):
 
 def _decode_raw_value(raw_value, descriptor):
     if descriptor.unit == 'CCITTIA5': # Textual
-        value = raw_value.decode('hex').decode('iso-8859-1') # CCITT IA5 is pretty close to ASCII, which is a subset of ISO-8859-1
+        value = codecs.decode(raw_value.encode('iso-8859-1'),'hex_codec').decode('iso-8859-1') # CCITT IA5 is pretty close to ASCII, which is a subset of ISO-8859-1
     else: # Numeric
         if raw_value ^ ((1 << descriptor.length)-1) == 0: # Missing value, all-ones
             value = None
@@ -190,7 +195,7 @@ def decode_section4_v3(stream, descriptors):
                     count = decode(bits, itertools.islice(descriptors, 1))[0].value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
-                for _ in xrange(count):
+                for _ in range(count):
                     aggregation.append(decode(bits, iter(field_descriptors)))
                 values.append(aggregation)
             elif isinstance(descriptor, OperatorDescriptor):
@@ -339,7 +344,7 @@ def libbufr_compatible_rdt(data):
                     pass
                 else:
                     if len(el) == 54:
-                        print >> sys.stderr, "54 at", level
+                        print("54 at", level, file=sys.stderr)
                     yield BufrValue(len(el), len(el), None)
                 for x in flatten(el,level+1):
                     yield x
@@ -412,13 +417,13 @@ if __name__ == '__main__':
     for fname in sys.argv[2:]:
         msg = bufrdec(ByteStream(open(fname, 'rb')), b_table)
     def printval(val, indentation=0):
-        print " "*indentation, int2fxy(val.descriptor.code), val.value, val.descriptor.significance
+        print(" "*indentation, int2fxy(val.descriptor.code), val.value, val.descriptor.significance)
     def printvals(vals, indentation=0):
         for val in vals:
             if isinstance(val, list):
                 for mval in val:
                     printvals(mval, indentation+2)
-                    print
+                    print()
             else:
                 printval(val, indentation)
     #printvals(msg.section4.data)

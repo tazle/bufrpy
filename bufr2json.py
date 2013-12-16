@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import bufrpy
 import json
 import sys
@@ -14,4 +16,4 @@ t_2 = time.time()
 dec = bufrpy.from_json(json.loads(out))
 t_3 = time.time()
 
-print out
+print(out)
