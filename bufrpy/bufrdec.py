@@ -1,3 +1,10 @@
+"""
+Decoder for RDT BUFR files
+
+Based on FM 94 BUFR edition 3 as found in WMO306_vl2_BUFR3_Spec_en.pdf
+
+"""
+
 from __future__ import print_function
 
 from bufrpy.util import ByteStream, ReadableStream
@@ -6,9 +13,6 @@ from bitstring import ConstBitStream, Bits
 from collections import namedtuple, defaultdict
 import re
 import codecs
-
-# Decoder for RDT BUFR files
-
 
 ElementDescriptor = namedtuple('ElementDescriptor', ['code', 'length', 'scale', 'ref', 'significance', 'unit'])
 
@@ -20,9 +24,45 @@ SequenceDescriptor = namedtuple('SequenceDescriptor', ['code', 'length', 'descri
 
 BufrValue = namedtuple('BufrValue', ['raw_value', 'value', 'descriptor'])
 
-Section0 = namedtuple("Section0", ["length", "edition"])
-Section1 = namedtuple("Section1", ["length", "master_table_id", "originating_centre", "originating_subcentre", "update_sequence_number", "optional_section", "data_category", "data_sub_category", "master_table_version", "local_table_version", "year", "month", "day", "hour", "minute"])
-Section2 = namedtuple("Section2", ["length", "data"])
+class Section0(namedtuple("_Section0", ["length", "edition"])):
+    """
+    Represents Section 0 of a BUFR message.
+
+    :ivar int length: Total message length, in bytes
+    :ivar int edition: BUFR edition number
+    """
+    __slots__ = ()
+
+class Section1(namedtuple("_Section1", ["length", "master_table_id", "originating_centre", "originating_subcentre", "update_sequence_number", "optional_section", "data_category", "data_subcategory", "master_table_version", "local_table_version", "year", "month", "day", "hour", "minute"])):
+    """
+    Section 1 of a BUFR edition 3 message.
+
+    :ivar int length: Length of Section 1
+    :ivar int master_table_id: Master table identifier
+    :ivar int originating_centre: Originating/generating centre
+    :ivar int originating_subcentre: Originating/generating subcentre
+    :ivar int update_sequence_number: Update sequence number
+    :ivar int optional_section: 0 if optional section not present, 1 if present
+    :ivar int data_category: Data category (identifies Table A to be used)
+    :ivar int data_subcategory: Data subcategory
+    :ivar int master_table_version: Master table version
+    :ivar int local_table_version: Local table version
+    :ivar int year: Year (of century, add 1900 to get year AD, years post-1999 are coded as integers >= 100)
+    :ivar int month: Month
+    :ivar int day: Day
+    :ivar int hour: Hour
+    :ivar int minute: Minute
+    """
+    __slots__ = ()
+
+class Section2(namedtuple("_Section2", ["length", "data"])):
+    """
+    Section 2 of a BUFR edition 3 message.
+
+    :ivar int length": Length of Section 2
+    :ivar data: Contents of section 2, as list of integers representing the content bytes
+    """
+    __slots__ = ()
 Section3 = namedtuple("Section3", ["length", "n_subsets", "flags", "descriptors"])
 Section4 = namedtuple("Section4", ["length", "data"])
 Section5 = namedtuple("Section5", ["data"])
@@ -32,6 +72,14 @@ BufrMessage = namedtuple("BufrMessage", ["section0", "section1", "section2", "se
 BufrTemplate = namedtuple("BufrTemplate", ["name", "descriptors"])
 
 def decode_section0(stream):
+    """
+    Decode Section 0 of a BUFR message into :class:`.Section0` object.
+
+    :param ReadableStream stream: Stream to decode from
+    :return: Decoded Section 0
+    :rtype: Section0
+    :raises ValueError: if the message does not start with BUFR
+    """
     bufr = stream.readstr(4)
     if bufr != 'BUFR':
         raise ValueError("BUFR message must start with bytes BUFR, got: " + bufr)
@@ -40,6 +88,14 @@ def decode_section0(stream):
     return Section0(total_length, edition)
 
 def decode_section1_v3(stream):
+    """
+    Decode Section 1 of version 3 BUFR message into :class:`.Section1` object.
+
+    :param ReadableStream stream: Stream to decode from
+    :return: Decoded Section 1
+    :rtype: Section1
+    :raises ValueError: if master table id is not 0
+    """
     length = stream.readint(3)
     master_table_id = stream.readint(1)
     if master_table_id != 0:
@@ -49,7 +105,7 @@ def decode_section1_v3(stream):
     update_sequence_number = stream.readint(1)
     optional_section = stream.readint(1)
     data_category = stream.readint(1)
-    data_sub_category = stream.readint(1)
+    data_subcategory = stream.readint(1)
     master_table_version = stream.readint(1)
     local_table_version = stream.readint(1)
     year = stream.readint(1)
@@ -59,9 +115,16 @@ def decode_section1_v3(stream):
     minute = stream.readint(1)
     # Total bytes read this far is 17, read length-17 to complete the section
     rest = stream.readbytes(length-17)
-    return Section1(length, master_table_id, originating_centre, originating_subcentre, update_sequence_number, optional_section, data_category, data_sub_category, master_table_version, local_table_version, year, month, day, hour, minute)
+    return Section1(length, master_table_id, originating_centre, originating_subcentre, update_sequence_number, optional_section, data_category, data_subcategory, master_table_version, local_table_version, year, month, day, hour, minute)
 
 def decode_section2_v3(stream):
+    """
+    Decode Section 2 of version 3 BUFR message into :class:`.Section2` object.
+
+    :param ReadableStream stream: Stream to decode from
+    :return: Decoded Section 2
+    :rtype: Section2
+    """
     length = stream.readint(3)
     data = list(stream.readbytes(length-3))
     return Section2(length, data)
