@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from bufrpy.util import ByteStream, ReadableStream
 import itertools
 from bitstring import ConstBitStream, Bits
 from collections import namedtuple, defaultdict
@@ -8,39 +9,6 @@ import codecs
 
 # Decoder for RDT BUFR files
 
-class ByteStream(object):
-    def __init__(self, filelike):
-        self.f = filelike
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        d = self.f.read(1)
-        if len(d):
-            return d
-        else:
-            raise StopIteration
-
-    __next__ = next
-
-class ReadableStream(object):
-    def __init__(self, stream):
-        self.stream = stream
-
-    def readstr(self, n):
-        """ Read n bytes as CCITT IA5 String """
-        # TODO CCITT IA5 rather than ASCII
-        return b"".join(itertools.islice(self.stream, n)).decode('iso-8859-1')
-
-    def readbytes(self, n):
-        """ Read n bytes as list of ints """
-        return list(ord(x) for x in itertools.islice(self.stream, n))
-
-    def readint(self, n):
-        """ Read n-byte big-endian integer """
-        bytes = list(itertools.islice(self.stream, n))
-        return sum([ord(x) << 8*i for (i,x) in enumerate(reversed(bytes))])
 
 class BufrTable(object):
     def __init__(self, descriptors):
