@@ -10,13 +10,6 @@ import codecs
 # Decoder for RDT BUFR files
 
 
-class BufrTable(object):
-    def __init__(self, descriptors):
-        self.descriptors = descriptors
-
-    def descriptor(self, descriptor_code):
-        return self.descriptors[descriptor_code]
-
 ElementDescriptor = namedtuple('ElementDescriptor', ['code', 'length', 'scale', 'ref', 'significance', 'unit'])
 
 ReplicationDescriptor = namedtuple('ReplicationDescriptor', ['code', 'length', 'fields', 'count', 'significance'])
