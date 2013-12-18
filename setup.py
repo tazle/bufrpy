@@ -1,8 +1,9 @@
 from setuptools import setup
+import bufrpy
 
 setup(name="bufrpy",
       packages=["bufrpy"],
-      version="0.1",
+      version=bufrpy.__version__,
       description="Pyre-Python BUFR decoder",
       url="https://github.com/tazle/bufrpy",
       author="Tuure Laurinolli / FMI",

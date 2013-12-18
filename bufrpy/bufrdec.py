@@ -1,28 +1,12 @@
-"""
-Decoder for RDT BUFR files
-
-Based on FM 94 BUFR edition 3 as found in WMO306_vl2_BUFR3_Spec_en.pdf
-
-"""
-
 from __future__ import print_function
 
-from bufrpy.util import ByteStream, ReadableStream
+from bufrpy.util import ByteStream, ReadableStream, int2fxy
+from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor
+from bufrpy.template import BufrTemplate
+from bufrpy.value import _decode_raw_value
 import itertools
-from bitstring import ConstBitStream, Bits
 from collections import namedtuple, defaultdict
 import re
-import codecs
-
-ElementDescriptor = namedtuple('ElementDescriptor', ['code', 'length', 'scale', 'ref', 'significance', 'unit'])
-
-ReplicationDescriptor = namedtuple('ReplicationDescriptor', ['code', 'length', 'fields', 'count', 'significance'])
-
-OperatorDescriptor = namedtuple('OperatorDescriptor', ['code', 'length', 'operation', 'operand', 'significance'])
-
-SequenceDescriptor = namedtuple('SequenceDescriptor', ['code', 'length', 'descriptors', 'significance'])
-
-BufrValue = namedtuple('BufrValue', ['raw_value', 'value', 'descriptor'])
 
 class Section0(namedtuple("_Section0", ["length", "edition"])):
     """
@@ -68,8 +52,6 @@ Section4 = namedtuple("Section4", ["length", "data"])
 Section5 = namedtuple("Section5", ["data"])
 
 BufrMessage = namedtuple("BufrMessage", ["section0", "section1", "section2", "section3", "section4", "section5"])
-
-BufrTemplate = namedtuple("BufrTemplate", ["name", "descriptors"])
 
 def decode_section0(stream):
     """
@@ -184,18 +166,9 @@ def decode_section3_v3(stream, descriptor_table):
         descriptors = _decode_descriptors_table(length-7, stream, descriptor_table)
     return Section3(length, n_subsets, flags, descriptors)
 
-def _decode_raw_value(raw_value, descriptor):
-    if descriptor.unit == 'CCITTIA5': # Textual
-        value = codecs.decode(raw_value.encode('iso-8859-1'),'hex_codec').decode('iso-8859-1') # CCITT IA5 is pretty close to ASCII, which is a subset of ISO-8859-1
-    else: # Numeric
-        if raw_value ^ ((1 << descriptor.length)-1) == 0: # Missing value, all-ones
-            value = None
-        else:
-            value = 10**-descriptor.scale * (raw_value + descriptor.ref)
-    return BufrValue(raw_value, value, descriptor)
-
 
 def decode_section4_v3(stream, descriptors):
+    from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
     data = stream.readbytes(length-4)
@@ -245,8 +218,8 @@ def bufrdec(stream, b_table):
     """ 
     See WMO306_vl2_BUFR3_Spec_en.pdf for BUFR format specification.
 
-    @param stream ByteStream that contains the bufr message
-    @param b_table either a dict containing mapping from BUFR descriptor codes to descriptors or a BufrTemplate describing the message
+    :param ByteStream stream: stream that contains the bufr message
+    :param dict|BufrTemplate b_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a BufrTemplate describing the message
     """
 
     rs = ReadableStream(stream)
@@ -263,176 +236,7 @@ def bufrdec(stream, b_table):
     section5 = decode_section5_v3(rs)
     return BufrMessage(section0, section1, section2, section3, section4, section5)
 
-def slices(s, slicing):
-    position = 0
-    out = []
-    for length in slicing:
-        out.append(s[position:position + length])
-        position += length
-    return out
 
-def fxy(fxy_code):
-    # "fxxyyy" -> int(f),int(xx),int(yyy)
-    # e.g. "001007" -> 0,1,7
-    return map(int, slices(fxy_code, [1,2,3]))
-
-def fxy2int(fxy_code):
-    # "fxxyyy" -> int(f),int(xx),int(yyy) -> (f << 14 + xx << 8 + yyy)
-    # e.g. "001007" -> 0,1,7 -> (0 << 14 + 1 << 6 + 7) = 263
-    f,x,y = fxy(fxy_code)
-    return (f << 14) + (x << 8) + y
-
-def int2fxy(code):
-    # Inverse of fxy2int
-    f = code >> 14 & 0x3
-    x = code >> 8 & 0x3f
-    y = code & 0xff
-    return "%d%02d%03d" %(f,x,y)
-
-def read_libbufr_b_table(line_stream):
-    descriptors = {}
-    for line in line_stream:
-        # Format from btable.F:146 in libbufr version 000400
-        parts = slices(line, [1,6,1,64,1,24,1,3,1,12,1,3])
-        raw_descriptor = parts[1]
-        descriptor_code = fxy2int(raw_descriptor)
-        significance = parts[3].strip()
-        unit = parts[5].strip()
-        scale = int(parts[7])
-        reference = int(parts[9])
-        bits = int(parts[11])
-
-        descr_class = raw_descriptor[0]
-        if descr_class == '0':
-            descriptors[descriptor_code] = ElementDescriptor(descriptor_code, bits, scale, reference, significance, unit)
-        elif descr_class == '1':
-            f,x,y = fxy(raw_descriptor)
-            descriptors[descriptor_code] = ReplicationDescriptor(descriptor_code, 0, x, y, significance)
-        elif descr_class == '2':
-            f,x,y = fxy(raw_descriptor)
-            descriptors[descriptor_code] = OperatorDescriptor(descriptor_code, 0, x, y, significance)
-        elif descr_class == '3':
-            raise NotImplementedError("Support for sequence descriptors not implemented yet")
-        else:
-            raise ValueError("Encountered unknown descriptor class: %s" %descr_class)
-    return descriptors
-
-def read_safnwc_template(line_stream):
-    descriptors = []
-    metadata = {}
-    for l in line_stream:
-        if l.startswith("#") or l.startswith("/*"):
-            # Ignore comments, does not support multiline comments properly
-            continue
-        elif l.startswith("NUM"):
-            name, num = l.split(" ")
-            metadata[name] = int(num)
-        else:
-            # Input lines look like this:
-            # 1       001033  0       0        8             Code table        Identification of originating/generating centre
-            num = int(l[:8])
-            raw_descriptor = l[8:14]
-            descriptor_code = fxy2int(raw_descriptor)
-            scale = int(l[14:23])
-            reference = int(l[23:33])
-            bits = int(l[33:47])
-            unit = l[47:65].strip()[:24]
-            significance = l[65:].strip()[:64]
-
-            descr_class = raw_descriptor[0]
-            if descr_class == '0':
-                descriptors.append(ElementDescriptor(descriptor_code, bits, scale, reference, significance, unit))
-            elif descr_class == '1':
-                f,x,y = fxy(raw_descriptor)
-                descriptors.append(ReplicationDescriptor(descriptor_code, 0, x, y, significance))
-            elif descr_class == '2':
-                f,x,y = fxy(raw_descriptor)
-                descriptors.append(OperatorDescriptor(descriptor_code, 0, x, y, significance))
-            elif descr_class == '3':
-                # Ignore sequence descriptors, they are followed by constituent elements in the SAFNWC template format
-                continue
-            else:
-                raise ValueError("Encountered unknown descriptor class: %s" %descr_class)
-    name = "B0000000000%(NUM_ORIGINATING_CENTRE)03d%(NUM_BUFR_MAIN_TABLE)03d%(NUM_BUFR_LOCAL_TABLES)03d.TXT" %metadata
-    return BufrTemplate(name, descriptors)
-        
-
-def libbufr_compatible_rdt(data):
-    def flatten(iterable, level=0):
-        for el in iterable:
-            if isinstance(el, list):
-                
-                if len(el) == 2:
-                    pass
-                elif level == 1 and len(el) == 54:
-                    pass
-                else:
-                    if len(el) == 54:
-                        print("54 at", level, file=sys.stderr)
-                    yield BufrValue(len(el), len(el), None)
-                for x in flatten(el,level+1):
-                    yield x
-            else:
-                yield el
-
-    def like_libbufr_values(data):
-        counter = 1
-        for x in flatten(data):
-            if x.value is None:
-                yield 1.7e38
-            elif isinstance(x.value, int):
-                yield str(x.value) + ".0"
-            elif isinstance(x.value, float):
-                if int(x.value) == x.value:
-                    yield str(int(x.value)) + ".0"
-                else:
-                    yield x.value
-                    #yield re.sub("\.$", ".0", ("%20.5f" %x.value).rstrip("0")).strip(" ")
-            elif isinstance(x.value, unicode):
-                yield "%d%03d.0" %(counter, len(x.value))
-                counter += 1
-            else:
-                yield x.value
-    return like_libbufr_values(msg.section4.data)
-
-def to_json(msg):
-    descriptor_index = {}
-    for i,descriptor in enumerate(msg.section3.descriptors):
-        descriptor_index[descriptor] = i
-
-    def to_json_data(data):
-        result = []
-        for el in data:
-            if isinstance(el, list):
-                result.append(to_json_data(el))
-            else:
-                result.append({"desc":descriptor_index[el.descriptor], "val":el.raw_value})
-        return result
-
-    result = {"descriptors":msg.section3.descriptors, "data":to_json_data(msg.section4.data)}
-    return result
-
-def from_json(json_obj):
-    descriptor_types = {0:ElementDescriptor, 1:ReplicationDescriptor, 2:OperatorDescriptor, 3:SequenceDescriptor}
-    descriptors = []
-    for descriptor_def in json_obj["descriptors"]:
-        dtype = descriptor_def[0] >> 14 & 0x3
-        klass = descriptor_types[dtype]
-        descriptors.append(klass(*descriptor_def))
-
-    def decode_data(json_data):
-        result = []
-        for el in json_data:
-            if isinstance(el, dict):
-                descriptor = descriptors[el["desc"]]
-                result.append(_decode_raw_value(el["val"], descriptor))
-            else:
-                result.append(decode_data(el))
-        return result
-
-    data = decode_data(json_obj["data"])
-            
-    return BufrMessage(None, None, None, Section3(None, None, None, descriptors), Section4(None, data), None)
     
 
 if __name__ == '__main__':
