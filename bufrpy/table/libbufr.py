@@ -1,6 +1,6 @@
 from bufrpy.util import slices
 
-def read_libbufr_b_table(line_stream):
+def read_b_table(line_stream):
     """
     Read BUFR B-table in from libbufr text file.
 

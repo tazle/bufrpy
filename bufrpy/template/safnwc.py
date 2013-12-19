@@ -1,10 +1,8 @@
-from collections import namedtuple
 from bufrpy.util import fxy2int, fxy
 from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor
+from bufrpy.template import BufrTemplate
 
-BufrTemplate = namedtuple("BufrTemplate", ["name", "descriptors"])
-
-def read_safnwc_template(line_stream):
+def read_template(line_stream):
     """
     Read SAFNWC message template into BufrTemplate
 
