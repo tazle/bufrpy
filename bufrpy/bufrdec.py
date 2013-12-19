@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from bufrpy.util import ByteStream, ReadableStream, int2fxy
 from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor
-from bufrpy.template import BufrTemplate
+from bufrpy.template import Template
 from bufrpy.value import _decode_raw_value
 import itertools
 from collections import namedtuple, defaultdict
@@ -149,10 +149,10 @@ def _decode_descriptors_template(length, stream, descriptor_template):
 
 def decode_section3_v3(stream, descriptor_table):
     """
-    @param stream Byte stream containing the BUFR message
-    @param descriptor_table either a dict containing mapping from BUFR descriptor codes to descriptors or a BufrTemplate describing the message
+    :param ReadableStream stream: BUFR message, starting at section 3
+    :param dict|Template descriptor_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
 
-    If descriptor_table is a BufrTemplate, it must match the structure of the message.
+    If descriptor_table is a Template, it must match the structure of the message.
     """
     length = stream.readint(3)
     reserved = stream.readint(1)
@@ -160,7 +160,7 @@ def decode_section3_v3(stream, descriptor_table):
     flags = stream.readint(1)
     # 7 bytes of headers so far
 
-    if isinstance(descriptor_table, BufrTemplate):
+    if isinstance(descriptor_table, Template):
         descriptors = _decode_descriptors_template(length-7, stream, descriptor_table)
     else:
         descriptors = _decode_descriptors_table(length-7, stream, descriptor_table)
@@ -219,7 +219,7 @@ def bufrdec(stream, b_table):
     See WMO306_vl2_BUFR3_Spec_en.pdf for BUFR format specification.
 
     :param ByteStream stream: stream that contains the bufr message
-    :param dict|BufrTemplate b_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a BufrTemplate describing the message
+    :param dict|Template b_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
     """
 
     rs = ReadableStream(stream)

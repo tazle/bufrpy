@@ -1,17 +1,18 @@
 from bufrpy.util import fxy2int, fxy
 from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor
-from bufrpy.template import BufrTemplate
+from bufrpy.template import Template
 
 def read_template(line_stream):
     """
-    Read SAFNWC message template into BufrTemplate
+    Read SAFNWC message template into Template
 
     SAFNWC template lines look as follows:
 
     ``1       001033  0       0        8             Code table        Identification of originating/generating centre``
 
     :param line_stream: Lines of SAFNWC template file
-    :return: the template as BufrTemplate
+    :return: the template as Template
+    :rtype: Template
     :raises ValueError: if the template contains a desccriptor outside range [0,3]
     """
     descriptors = []
@@ -50,4 +51,4 @@ def read_template(line_stream):
             else:
                 raise ValueError("Encountered unknown descriptor class: %s" %descr_class)
     name = "B0000000000%(NUM_ORIGINATING_CENTRE)03d%(NUM_BUFR_MAIN_TABLE)03d%(NUM_BUFR_LOCAL_TABLES)03d.TXT" %metadata
-    return BufrTemplate(name, descriptors)
+    return Template(name, descriptors)
