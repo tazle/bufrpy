@@ -14,6 +14,20 @@ Reading BUFR messages
 BUFR message representation
 ---------------------------
 
+BUFR Message
+............
+
+BUFR Message is represented as a :py:class:`BufrMessage`.
+
+.. autoclass:: bufrpy.BufrMessage
+
+BUFR Template
+.............
+
+BUFR Descriptors
+................
+
+
 Reading BUFR tables
 -------------------
 
