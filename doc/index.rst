@@ -6,6 +6,22 @@
 bufrpy
 ======
 
+Bufrpy is a pure-Python BUFR message decoder. BUFR messages are
+typically used to transmit meteorological observations. Bufrpy was
+developed to work with NWCSAF_ RDT and HRW data, but there should not
+be any reason why it could not be used with any BUFR messages, with
+the following limitations:
+
+* Messages with multiple data subsets are not supported
+* Compressed messages are not supported
+* Operator descriptors are not supported
+* Sequence descriptors are ignored
+
+Adding support for any of the above should be feasible, but we have
+not encountered such data
+
+.. _NWCSAF: http://www.nwcsaf.org/
+
 Examples
 --------
 
