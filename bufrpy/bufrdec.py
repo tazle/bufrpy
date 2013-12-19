@@ -43,7 +43,7 @@ class Section2(namedtuple("_Section2", ["length", "data"])):
     """
     Section 2 of a BUFR edition 3 message.
 
-    :ivar int length": Length of Section 2
+    :ivar int length: Length of Section 2
     :ivar data: Contents of section 2, as list of integers representing the content bytes
     """
     __slots__ = ()
