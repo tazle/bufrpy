@@ -3,19 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to bufrpy's documentation!
-==================================
+bufrpy
+======
 
-Contents:
+Examples
+--------
+
+Usage examples
 
 .. toctree::
    :maxdepth: 2
 
+   examples
+
 API Documentation
 -----------------
 
-If you are looking for information on a specific function, class or method,
-this part of the documentation is for you.
+API documentation covers the public API
 
 .. toctree::
    :maxdepth: 2
