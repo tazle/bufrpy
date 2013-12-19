@@ -47,8 +47,36 @@ class Section2(namedtuple("_Section2", ["length", "data"])):
     :ivar data: Contents of section 2, as list of integers representing the content bytes
     """
     __slots__ = ()
-Section3 = namedtuple("Section3", ["length", "n_subsets", "flags", "descriptors"])
-Section4 = namedtuple("Section4", ["length", "data"])
+
+class Section3(namedtuple("_Section3", ["length", "n_subsets", "flags", "descriptors"])):
+    """Section 3 of a BUFR edition 3 message.
+
+    Section 3 contains descriptors that describe the actual data
+    format. Descriptors are instances of one of the descriptor
+    classes: :py:class:`.descriptors.ElementDescriptor`,
+    :py:class:`.descriptors.ReplicationDescriptor`,
+    :py:class:`.descriptors.OperatorDescriptor`,
+    :py:class:`.descriptors.SequenceDescriptor`.
+
+    :ivar int length: Length of Section 3
+    :ivar int n_subsets: Number of data subsets in the data section
+    :ivar int flags: Flags describing the data set. See BUFR specification for details.
+    :ivar descriptors: List of descriptors that describe the contents of each data subset.
+
+    """
+    __slots__ = ()
+
+class Section4(namedtuple("_Section4", ["length", "data"])):
+    """
+    Section 4 of a BUFR edition 4 message.
+
+    Section 4 contains the actual message data.
+
+    :ivar int length: Length of Section 4
+    :ivar data: Message data as a list of BufrValues.
+    """
+    __slots__ = ()
+
 Section5 = namedtuple("Section5", ["data"])
 
 BufrMessage = namedtuple("BufrMessage", ["section0", "section1", "section2", "section3", "section4", "section5"])
