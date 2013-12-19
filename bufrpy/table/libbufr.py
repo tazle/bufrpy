@@ -1,4 +1,5 @@
-from bufrpy.util import slices
+from bufrpy.util import slices, fxy2int, fxy
+from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor
 
 def read_b_table(line_stream):
     """
