@@ -183,7 +183,7 @@ def decode_section1_v4(stream):
     rest = stream.readbytes(length-22)
     return Section1v4(length, master_table_id, originating_centre, originating_subcentre, update_sequence_number, optional_section, data_category, data_subcategory, local_subcategory, master_table_version, local_table_version, year, month, day, hour, minute, second)
 
-def decode_section2_v3(stream):
+def decode_section2(stream):
     """
     Decode Section 2 of version 3 BUFR message into :class:`.Section2` object.
 
@@ -231,7 +231,7 @@ def _decode_descriptors_template(length, stream, descriptor_template):
 
     raise ValueError("Invalid template, length does not match message: template: %d, message: %d" %(len(descriptor_template.descriptors), len(codes)))
 
-def decode_section3_v3(stream, descriptor_table):
+def decode_section3(stream, descriptor_table):
     """
     :param ReadableStream stream: BUFR message, starting at section 3
     :param dict|Template descriptor_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
@@ -251,7 +251,7 @@ def decode_section3_v3(stream, descriptor_table):
     return Section3(length, n_subsets, flags, descriptors)
 
 
-def decode_section4_v3(stream, descriptors):
+def decode_section4(stream, descriptors):
     from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
@@ -290,7 +290,7 @@ def decode_section4_v3(stream, descriptors):
     values = decode(bits, iter(descriptors))
     return Section4(length, values)
 
-def decode_section5_v3(stream):
+def decode_section5(stream):
     data = stream.readstr(4)
     END_TOKEN = "7777"
     if data != END_TOKEN:
@@ -319,12 +319,12 @@ def bufrdec(stream, b_table):
     elif section0.edition == 4:
         section1 = decode_section1_v4(rs)
     if section1.optional_section != 0:
-        section2 = decode_section2_v3(rs)
+        section2 = decode_section2(rs)
     else:
         section2 = None
-    section3 = decode_section3_v3(rs, b_table)
-    section4 = decode_section4_v3(rs, section3.descriptors)
-    section5 = decode_section5_v3(rs)
+    section3 = decode_section3(rs, b_table)
+    section4 = decode_section4(rs, section3.descriptors)
+    section5 = decode_section5(rs)
     return BufrMessage(section0, section1, section2, section3, section4, section5)
 
 
