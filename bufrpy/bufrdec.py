@@ -185,7 +185,7 @@ def decode_section1_v4(stream):
 
 def decode_section2(stream):
     """
-    Decode Section 2 of version 3 BUFR message into :class:`.Section2` object.
+    Decode Section 2 of a BUFR message into :class:`.Section2` object.
 
     :param ReadableStream stream: Stream to decode from
     :return: Decoded Section 2
@@ -233,10 +233,12 @@ def _decode_descriptors_template(length, stream, descriptor_template):
 
 def decode_section3(stream, descriptor_table):
     """
-    :param ReadableStream stream: BUFR message, starting at section 3
-    :param dict|Template descriptor_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
+    Decode Section 3, the descriptor section, of a BUFR message into a :class:`.Section3` object.
 
     If descriptor_table is a Template, it must match the structure of the message.
+
+    :param ReadableStream stream: BUFR message, starting at section 3
+    :param dict|Template descriptor_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
     """
     length = stream.readint(3)
     reserved = stream.readint(1)
@@ -252,6 +254,14 @@ def decode_section3(stream, descriptor_table):
 
 
 def decode_section4(stream, descriptors):
+    """
+    Decode Section 4, the data section, of a BUFR message into a :class:`.Section4` object.
+
+    :param ReadableStream stream: BUFR message, starting at section 4
+    :param descriptors: List of descriptors specifying message structure
+    :raises NotImplementedError: if the message contains operator descriptors
+    :raises NotImplementedError: if the message contains sequence descriptors
+    """
     from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
@@ -291,6 +301,14 @@ def decode_section4(stream, descriptors):
     return Section4(length, values)
 
 def decode_section5(stream):
+    """
+    Decode Section 5 of a BUFR message into a :class:`.Section5` object.
+
+    Section 5 is just a trailer to allow verifying that the message has been read completely.
+
+    :param ReadableStream stream: BUFR message, starting at section 5
+    :raises ValueError: if message end token is not 7777 as specified
+    """
     data = stream.readstr(4)
     END_TOKEN = "7777"
     if data != END_TOKEN:
@@ -298,16 +316,24 @@ def decode_section5(stream):
     return Section5(data)
 
 def bufrdec_file(f, b_table):
+    """
+    Decode BUFR message from a file into a :class:`.BufrMessage` object.
+
+    :param file f: File that contains the bufr message
+    :param dict|Template b_table: Either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
+    """
     return bufrdec(ByteStream(f), b_table)
 
 READ_VERSIONS=(3,4)
 
 def bufrdec(stream, b_table):
     """ 
+    Decode BUFR message from stream into a :class:`.BufrMessage` object.
+
     See WMO306_vl2_BUFR3_Spec_en.pdf for BUFR format specification.
 
-    :param ByteStream stream: stream that contains the bufr message
-    :param dict|Template b_table: either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
+    :param ByteStream stream: Stream that contains the bufr message
+    :param dict|Template b_table: Either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
     """
 
     rs = ReadableStream(stream)
