@@ -110,7 +110,7 @@ class Section5(namedtuple("_Section5", ["data"])):
     __slots__ = ()
 
 
-class BufrMessage(namedtuple("_BufrMessage", ["section0", "section1", "section2", "section3", "section4", "section5"])):
+class Message(namedtuple("_Message", ["section0", "section1", "section2", "section3", "section4", "section5"])):
     """
     Represents a complete BUFR message, of either edition 3 or edition 4.
 
@@ -335,7 +335,7 @@ def decode_section5(stream):
 
 def bufrdec_file(f, b_table):
     """
-    Decode BUFR message from a file into a :class:`.BufrMessage` object.
+    Decode BUFR message from a file into a :class:`.Message` object.
 
     :param file f: File that contains the bufr message
     :param dict|Template b_table: Either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
@@ -346,7 +346,7 @@ READ_VERSIONS=(3,4)
 
 def bufrdec(stream, b_table):
     """ 
-    Decode BUFR message from stream into a :class:`.BufrMessage` object.
+    Decode BUFR message from stream into a :class:`.Message` object.
 
     See WMO306_vl2_BUFR3_Spec_en.pdf for BUFR format specification.
 
@@ -369,7 +369,7 @@ def bufrdec(stream, b_table):
     section3 = decode_section3(rs, b_table)
     section4 = decode_section4(rs, section3.descriptors)
     section5 = decode_section5(rs)
-    return BufrMessage(section0, section1, section2, section3, section4, section5)
+    return Message(section0, section1, section2, section3, section4, section5)
 
 
     

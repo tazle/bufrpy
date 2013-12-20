@@ -2,7 +2,7 @@ def libbufr_compatible_rdt(msg):
     """
     Convert bufrdec output to a format that is equivalent to python-bufr output
 
-    :param bufrpy.BufrMessage msg: BUFR message to convert
+    :param bufrpy.Message msg: BUFR message to convert
     :return: Output similar to that of python-bufr
     """
     def flatten(iterable, level=0):
