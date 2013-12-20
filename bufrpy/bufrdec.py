@@ -41,7 +41,7 @@ class Section1v3(namedtuple("_Section1v3", ["length", "master_table_id", "origin
 
 class Section1v4(namedtuple("_Section1v4", ["length", "master_table_id", "originating_centre", "originating_subcentre", "update_sequence_number", "optional_section", "data_category", "data_subcategory", "local_subcategory", "master_table_version", "local_table_version", "year", "month", "day", "hour", "minute", "second"])):
     """
-    Section 1 of a BUFR edition 3 message.
+    Section 1 of a BUFR edition 4 message.
 
     :ivar int length: Length of Section 1
     :ivar int master_table_id: Master table identifier
@@ -65,7 +65,7 @@ class Section1v4(namedtuple("_Section1v4", ["length", "master_table_id", "origin
 
 class Section2(namedtuple("_Section2", ["length", "data"])):
     """
-    Section 2 of a BUFR edition 3 message.
+    Section 2 of a BUFR message.
 
     :ivar int length: Length of Section 2
     :ivar data: Contents of section 2, as list of integers representing the content bytes
@@ -73,7 +73,7 @@ class Section2(namedtuple("_Section2", ["length", "data"])):
     __slots__ = ()
 
 class Section3(namedtuple("_Section3", ["length", "n_subsets", "flags", "descriptors"])):
-    """Section 3 of a BUFR edition 3 message.
+    """Section 3 of a BUFR message.
 
     Section 3 contains descriptors that describe the actual data
     format. Descriptors are instances of one of the descriptor
@@ -92,7 +92,7 @@ class Section3(namedtuple("_Section3", ["length", "n_subsets", "flags", "descrip
 
 class Section4(namedtuple("_Section4", ["length", "data"])):
     """
-    Section 4 of a BUFR edition 4 message.
+    Section 4 of a BUFR message.
 
     Section 4 contains the actual message data.
 
@@ -101,9 +101,27 @@ class Section4(namedtuple("_Section4", ["length", "data"])):
     """
     __slots__ = ()
 
-Section5 = namedtuple("Section5", ["data"])
+class Section5(namedtuple("_Section5", ["data"])):
+    """
+    Section 5 of a BUFR message.
 
-BufrMessage = namedtuple("BufrMessage", ["section0", "section1", "section2", "section3", "section4", "section5"])
+    :ivar data: End token.
+    """
+    __slots__ = ()
+
+
+class BufrMessage(namedtuple("_BufrMessage", ["section0", "section1", "section2", "section3", "section4", "section5"])):
+    """
+    Represents a complete BUFR message, of either edition 3 or edition 4.
+
+    :ivar Section0 section0: Section 0, start token and length
+    :ivar Section1v3|Section1v4 section1: Section 1, time and source metadata
+    :ivar Section2 section2: Section 2, optional metadata, not processed
+    :ivar Section3 section3: Section 3, message structure
+    :ivar Section4 section4: Section 4, message contents
+    :ivar Section5 section5: Section 5, end token
+    """
+    __slots__ = ()
 
 def decode_section0(stream):
     """
