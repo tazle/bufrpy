@@ -142,7 +142,7 @@ def decode_section1_v3(stream):
     data_subcategory = stream.readint(1)
     master_table_version = stream.readint(1)
     local_table_version = stream.readint(1)
-    year = stream.readint(1)
+    year = stream.readint(1) + 1900
     month = stream.readint(1)
     day = stream.readint(1)
     hour = stream.readint(1)
