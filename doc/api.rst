@@ -17,16 +17,32 @@ BUFR message representation
 BUFR Message
 ............
 
-BUFR Message is represented as a :py:class:`BufrMessage`.
+BUFR Message is represented as a :py:class:`.Message`.
 
-.. autoclass:: bufrpy.BufrMessage
+.. autoclass:: bufrpy.Message
+
 
 BUFR Template
 .............
 
+BUFR Template is represented as a :py:class:`.Template`.
+
+.. autoclass:: bufrpy.template.Template
+
 BUFR Descriptors
 ................
 
+BUFR descriptors describe the data of the message. Atomic data
+elements are described by :py:class:`.ElementDescriptor`, multiple
+repetitions of a set of descriptors by
+:py:class:`.ReplicationDescriptor`, fixed sequences of elements by
+:py:class:`.SequenceDescriptor` and more complex structures by
+:py:class:`OperatorDescriptor`.
+
+.. autoclass:: bufrpy.descriptors.ElementDescriptor
+.. autoclass:: bufrpy.descriptors.ReplicationDescriptor
+.. autoclass:: bufrpy.descriptors.OperatorDescriptor
+.. autoclass:: bufrpy.descriptors.SequenceDescriptor
 
 Reading BUFR tables
 -------------------

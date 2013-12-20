@@ -4,7 +4,7 @@ from bufrpy.template import Template
 
 def read_template(line_stream):
     """
-    Read SAFNWC message template into Template
+    Read SAFNWC message template into a :class:`.Template`
 
     SAFNWC template lines look as follows:
 
