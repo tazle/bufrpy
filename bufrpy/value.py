@@ -1,7 +1,17 @@
 from collections import namedtuple
 import codecs
 
-BufrValue = namedtuple('BufrValue', ['raw_value', 'value', 'descriptor'])
+class BufrValue(namedtuple('BufrValue', ['raw_value', 'value', 'descriptor'])):
+    """Contains single value
+
+    Contains single value, both in raw and decoded form, plus a link
+    to its descriptor.
+
+    :ivar str|int raw_value: Raw value. Either as hex-encoded string for textual values or an unsigned integer for numeric values
+    :ivar str|int|float|None value: Decoded value. Value decoded according to its descriptor. Textual values are strings and numeric values floats or ints. Missing value is indicated by :py:data:`None`.
+    :ivar ElementDescriptor descriptor: The descriptor of this value
+    """
+    __slots__ = ()
 
 def _decode_raw_value(raw_value, descriptor):
     if descriptor.unit == 'CCITTIA5': # Textual

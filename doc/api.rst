@@ -37,12 +37,20 @@ elements are described by :py:class:`.ElementDescriptor`, multiple
 repetitions of a set of descriptors by
 :py:class:`.ReplicationDescriptor`, fixed sequences of elements by
 :py:class:`.SequenceDescriptor` and more complex structures by
-:py:class:`OperatorDescriptor`.
+:py:class:`.OperatorDescriptor`.
 
 .. autoclass:: bufrpy.descriptors.ElementDescriptor
 .. autoclass:: bufrpy.descriptors.ReplicationDescriptor
 .. autoclass:: bufrpy.descriptors.OperatorDescriptor
 .. autoclass:: bufrpy.descriptors.SequenceDescriptor
+
+BUFR Values
+...........
+
+BUFR values are represented a instances of :py:class:`.BufrValue`.
+
+.. autoclass:: bufrpy.value.BufrValue
+
 
 Reading BUFR tables
 -------------------
