@@ -15,10 +15,10 @@ the following limitations:
 * Messages with multiple data subsets are not supported
 * Compressed messages are not supported
 * Operator descriptors are not supported
-* Sequence descriptors are ignored
+* Sequence descriptors are not supported
 
 Adding support for any of the above should be feasible, but we have
-not encountered such data
+not encountered such data in our use of the library.
 
 .. _NWCSAF: http://www.nwcsaf.org/
 
