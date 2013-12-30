@@ -345,11 +345,12 @@ def bufrdec_file(f, b_table):
 READ_VERSIONS=(3,4)
 
 def bufrdec_all(stream, b_table):
-    """Decode all BUFR messages from stream into a list of
-    :class:`.Message`s and a list of decoding errors.
+    """
+    Decode all BUFR messages from stream into a list of :class:`.Message` objects and a list of decoding errors.
+    
 
     Reads through the stream, decoding well-formed BUFR messages. BUFR
-    messages must start with BUFR and end with 777. Data between
+    messages must start with BUFR and end with 7777. Data between
     messages is skipped.
 
     :param ByteStream stream: Stream that contains the bufr message
