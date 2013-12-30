@@ -344,6 +344,48 @@ def bufrdec_file(f, b_table):
 
 READ_VERSIONS=(3,4)
 
+def bufrdec_all(stream, b_table):
+    """Decode all BUFR messages from stream into a list of
+    :class:`.Message`s and a list of decoding errors.
+
+    Reads through the stream, decoding well-formed BUFR messages. BUFR
+    messages must start with BUFR and end with 777. Data between
+    messages is skipped.
+
+    :param ByteStream stream: Stream that contains the bufr message
+    :param dict|Template b_table: Either a dict containing mapping from BUFR descriptor codes to descriptors or a Template describing the message
+    """
+    def seek_past_bufr(stream):
+        """ Seek stream until BUFR is encountered. Returns True if BUFR found and False if not """
+        try:
+            c = None
+            while True:
+                if c != b'B':
+                    c = stream.next()
+                    continue
+                if c == b'B':
+                    c = stream.next()
+                    if c == b'U':
+                        c = stream.next()
+                        if c == b'F':
+                            c = stream.next()
+                            if c == b'R':
+                                return True
+                        
+        except StopIteration:
+            return False
+
+    messages = []
+    errors = []
+    while seek_past_bufr(stream):
+        try:
+            msg = bufrdec(itertools.chain([b'B',b'U',b'F',b'R'], stream), b_table)
+            messages.append(msg)
+        except Exception as e:
+            errors.append(e)
+            pass
+    return messages, errors
+
 def bufrdec(stream, b_table):
     """ 
     Decode BUFR message from stream into a :class:`.Message` object.
