@@ -18,6 +18,10 @@ t_0 = time.time()
 
 msg = bufrpy.bufrdec_file(open(sys.argv[2], 'rb'), b_table)
 t_1 = time.time()
+
+if msg.section3.n_subsets > 1:
+    raise Exception("Can't deal with messages with more than 1 subset")
+
 out = json.dumps(bufrpy.to_json(msg))
 t_2 = time.time()
 dec = bufrpy.from_json(json.loads(out))
