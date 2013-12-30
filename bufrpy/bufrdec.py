@@ -134,7 +134,7 @@ def decode_section0(stream):
     """
     bufr = stream.readstr(4)
     if bufr != 'BUFR':
-        raise ValueError("BUFR message must start with bytes BUFR, got: " + bufr)
+        raise ValueError("BUFR message must start with bytes BUFR, got: " + repr(bufr))
     total_length = stream.readint(3)
     edition = stream.readint(1)
     return Section0(total_length, edition)
