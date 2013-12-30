@@ -13,4 +13,7 @@ b_table = libbufr.read_b_table(codecs.open(sys.argv[1], 'rb', 'utf-8'))
 
 stream = ByteStream(open(sys.argv[2], 'rb'))
 messages, errors = bufrpy.bufrdec_all(stream, b_table)
+if errors:
+    print(errors)
+    sys.exit(1)
 print(json.dumps(messages))
