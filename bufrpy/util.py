@@ -29,16 +29,27 @@ class ReadableStream(object):
     def readstr(self, n):
         """ Read n bytes as CCITT IA5 String """
         # TODO CCITT IA5 rather than ISO-8859-1
-        return b"".join(islice(self.stream, n)).decode('iso-8859-1')
+        res = b"".join(islice(self.stream, n)).decode('iso-8859-1')
+        if len(res) == n:
+            return res
+        else:
+            raise IOError("Premature end of stream")
 
     def readbytes(self, n):
         """ Read n bytes as list of ints """
-        return list(ord(x) for x in islice(self.stream, n))
+        res = list(ord(x) for x in islice(self.stream, n))
+        if len(res) == n:
+            return res
+        else:
+            raise IOError("Premature end of stream")
 
     def readint(self, n):
         """ Read n-byte big-endian integer """
         bytes = list(islice(self.stream, n))
-        return sum([ord(x) << 8*i for (i,x) in enumerate(reversed(bytes))])
+        if len(bytes) == n:
+            return sum([ord(x) << 8*i for (i,x) in enumerate(reversed(bytes))])
+        else:
+            raise IOError("Premature end of stream")
 
 def slices(s, slicing):
     """
