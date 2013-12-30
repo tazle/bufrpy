@@ -9,7 +9,12 @@ API
 Reading BUFR messages
 ---------------------
 
+.. autofunction:: bufrpy.bufrdec_file
+
 .. autofunction:: bufrpy.bufrdec
+
+.. autofunction:: bufrpy.bufrdec_all
+
 
 BUFR message representation
 ---------------------------
