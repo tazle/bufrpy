@@ -21,6 +21,20 @@ BUFR Message is represented as a :py:class:`.Message`.
 
 .. autoclass:: bufrpy.Message
 
+The :py:class:`.Message` contains several sections. Of these, sections
+1, 3 and 4 are the most interesting. Section 1 contains message-level
+metadata, section 3 describes message structure and section 4 contains
+the actual data. Note that section 1 comes in multiple variants. The
+variant used depends on which edition of the BUFR specification was
+used to code the message.
+
+.. autoclass:: bufrpy.Section1v3
+
+.. autoclass:: bufrpy.Section1v4
+
+.. autoclass:: bufrpy.Section3
+
+.. autoclass:: bufrpy.Section4
 
 BUFR Template
 .............
