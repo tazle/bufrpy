@@ -1,4 +1,5 @@
 from collections import namedtuple
+from abc import ABCMeta, abstractproperty
 
 class ElementDescriptor(namedtuple('_ElementDescriptor', ['code', 'length', 'scale', 'ref', 'significance', 'unit'])):
     """Describes single value
@@ -16,6 +17,9 @@ class ElementDescriptor(namedtuple('_ElementDescriptor', ['code', 'length', 'sca
     """
     __slots__ = ()
 
+    def strong(self):
+        return self
+
 class ReplicationDescriptor(namedtuple('ReplicationDescriptor', ['code', 'length', 'fields', 'count', 'significance'])):
     """Describes a repeating collection of values
     
@@ -31,6 +35,9 @@ class ReplicationDescriptor(namedtuple('ReplicationDescriptor', ['code', 'length
     """
     __slots__ = ()
 
+    def strong(self):
+        return self
+
 class OperatorDescriptor(namedtuple('OperatorDescriptor', ['code', 'length', 'operation', 'operand', 'significance'])):
     """Significance unknown
 
@@ -38,7 +45,33 @@ class OperatorDescriptor(namedtuple('OperatorDescriptor', ['code', 'length', 'op
     """
     __slots__ = ()
 
-class SequenceDescriptor(namedtuple('_SequenceDescriptor', ['code', 'length', 'descriptors', 'significance'])):
+    def strong(self):
+        return self
+
+class SequenceDescriptor(object):
+    __metaclass__ = ABCMeta
+
+    @abstractproperty
+    def code(self):
+        pass
+
+    @abstractproperty
+    def length(self):
+        pass
+
+    @abstractproperty
+    def descriptor_codes(self):
+        pass
+
+    @abstractproperty
+    def significance(self):
+        pass
+
+    @abstractproperty
+    def descriptors(self):
+        pass
+
+class StrongSequenceDescriptor(namedtuple('_SequenceDescriptor', ['code', 'length', 'descriptor_codes', 'significance', 'descriptors']), SequenceDescriptor):
     """Describes a fixed sequence of elements in compact form
 
     Similar to a replication with count 1, but the encoded form is
@@ -46,7 +79,39 @@ class SequenceDescriptor(namedtuple('_SequenceDescriptor', ['code', 'length', 'd
     that at least in NWCSAF Templates the constituent elements of the
     sequence are also present in the template.
 
-    Not supported at the moment.
-
+    :ivar int code: Descriptor code
+    :ivar int length: Length of data, sum of lengths of constituent descriptors
+    :ivar int descriptor_codes: Tuple containing constituent descriptor codes
+    :ivar str significance: Meaning of the sequence, always empty string
+    :ivar descriptors: Tuple containing constituent descriptors.
     """
     __slots__ = ()
+
+    def strong(self):
+        return self
+
+class LazySequenceDescriptor(namedtuple('_LazySequenceDescriptor', ['code', 'descriptor_codes', 'significance', 'descriptor_table']), SequenceDescriptor):
+    """Describes a fixed sequence of elements in compact form
+
+    Similar to a replication with count 1, but the encoded form is
+    more compact, since the sequence of fields is implicit. Except
+    that at least in NWCSAF Templates the constituent elements of the
+    sequence are also present in the template.
+
+    :ivar int code: Descriptor code
+    :ivar int length: Length of data, sum of lengths of constituent descriptors
+    :ivar int descriptor_codes: List containing constituent descriptor codes
+    :ivar str significance: Meaning of the sequence, always empty string
+    :ivar descriptors: Tuple containing constituent descriptors. Lazily generated.
+    """
+
+    @property
+    def length(self):
+        return sum(x.length for x in self.descriptors)
+
+    @property
+    def descriptors(self):
+        return tuple(self.descriptor_table[code] for code in self.descriptor_codes)
+
+    def strong(self):
+        return StrongSequenceDescriptor(self.code, self.length, self.descriptor_codes, self.significance, tuple(d.strong() for d in self.descriptors))
