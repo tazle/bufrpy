@@ -1,18 +1,21 @@
-from bufrpy.util import slices, fxy2int, fxy
-from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor
+from bufrpy.util import slices, fxy2int, fxy, int2fxy
+from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, LazySequenceDescriptor
 
-def read_b_table(line_stream):
+def read_tables(b_line_stream, d_line_stream=None):
     """
-    Read BUFR B-table in from libbufr text file.
+    Read BUFR table(s) in from libbufr text file(s).
 
-    :param line_stream: Iterable of lines, contents of the B-table file
+    The return value is a dict that combines the tables read.
+
+    :param b_line_stream: Iterable of lines, contents of the B-table file
+    :param d_line_stream: Iterable of lines, contents of the D-table file
     :return: Mapping from FXY integers to descriptors
     :rtype: dict
     :raises NotImplementedError: if the table contains sequence descriptors
     :raises ValueError: if the table contains descriptors with illegal class (outside range [0,3])
     """
     descriptors = {}
-    for line in line_stream:
+    for line in b_line_stream:
         # Format from btable.F:146 in libbufr version 000400
         parts = slices(line, [1,6,1,64,1,24,1,3,1,12,1,3])
         raw_descriptor = parts[1]
@@ -33,8 +36,36 @@ def read_b_table(line_stream):
             f,x,y = fxy(raw_descriptor)
             descriptors[descriptor_code] = OperatorDescriptor(descriptor_code, 0, x, y, significance)
         elif descr_class == '3':
-            raise NotImplementedError("Support for sequence descriptors not implemented yet")
+            raise ValueError("B-table file should not contain descriptors of class 3: %s" %descr_class)
         else:
             raise ValueError("Encountered unknown descriptor class: %s" %descr_class)
+
+    def group_d_lines(ls):
+        buf = None
+        for line in ls:
+            if line.startswith(' 3'):
+                if buf:
+                    yield buf
+                buf = [line]
+            else:
+                buf.append(line)
+        yield buf
+
+    if d_line_stream:
+        for lines in group_d_lines(d_line_stream):
+            # Format inferred
+            parts = slices(lines[0], [1,6,1,2,1,6])
+            raw_d_descriptor = parts[1]
+            d_descriptor_code = fxy2int(raw_d_descriptor)
+            n_elements = int(parts[3])
+            actual_elements = len(lines)
+            if n_elements != actual_elements:
+                raise ValueError("Expected %d elements, found %d" %(n_elements, actual_elements))
+            constituent_codes = []
+            for line in lines:
+                l_parts = slices(line, [1,6,1,2,1,6])
+                constituent_codes.append(fxy2int(parts[5]))
+
+            descriptors[d_descriptor_code] = LazySequenceDescriptor(d_descriptor_code, constituent_codes, '', descriptors)
     return descriptors
 
