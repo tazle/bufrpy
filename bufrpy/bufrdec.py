@@ -8,6 +8,9 @@ import itertools
 from collections import namedtuple, defaultdict
 import re
 
+FLAG_COMPRESSED=64
+FLAG_OBSERVED=128
+
 class Section0(namedtuple("_Section0", ["length", "edition"])):
     """
     Represents Section 0 of a BUFR message.
@@ -425,7 +428,7 @@ def bufrdec(stream, b_table):
     else:
         section2 = None
     section3 = decode_section3(rs, b_table)
-    section4 = decode_section4(rs, section3.descriptors)
+    section4 = decode_section4(rs, section3.descriptors, section3.n_subsets, section3.flags & FLAG_COMPRESSED)
     section5 = decode_section5(rs)
     return Message(section0, section1, section2, section3, section4, section5)
 
