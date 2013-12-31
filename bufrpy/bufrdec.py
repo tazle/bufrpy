@@ -219,7 +219,10 @@ def _decode_descriptors_table(length, stream, descriptor_table):
     descriptors = []
     while n_read + 2 <= length:
         code = stream.readint(2)
-        descriptors.append(descriptor_table[code])
+        try:
+            descriptors.append(descriptor_table[code])
+        except KeyError as e:
+            raise KeyError("Missing definition for descriptor " + int2fxy(code))
         n_read += 2
 
     # read final byte, since length of the section should be even and
