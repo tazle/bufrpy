@@ -93,22 +93,22 @@ class Section3(namedtuple("_Section3", ["length", "n_subsets", "flags", "descrip
     """
     __slots__ = ()
 
-class Section4(namedtuple("_Section4", ["length", "segments"])):
+class Section4(namedtuple("_Section4", ["length", "subsets"])):
     """
     Section 4 of a BUFR message.
 
     Section 4 contains the actual message data.
 
     :ivar int length: Length of Section 4
-    :ivar segments: Message data as a list of BufrSegments.
+    :ivar subsets: Message data as a list of BufrSubsets.
     """
     __slots__ = ()
 
-class BufrSegment(namedtuple("_BufrSegment", ["values"])):
+class BufrSubset(namedtuple("_BufrSubset", ["values"])):
     """
-    Single BUFR message segment
+    Single BUFR message data subset
 
-    :ivar values: Segment data as a list of BufrValues.
+    :ivar values: Subset data as a list of BufrValues.
     """
 
 class Section5(namedtuple("_Section5", ["data"])):
@@ -284,13 +284,13 @@ def decode_section3(stream, descriptor_table):
     return Section3(length, n_subsets, flags, descriptors)
 
 
-def decode_section4(stream, descriptors, n_segments=1, compressed=False):
+def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     """
     Decode Section 4, the data section, of a BUFR message into a :class:`.Section4` object.
 
     :param ReadableStream stream: BUFR message, starting at section 4
     :param descriptors: List of descriptors specifying message structure
-    :param int n_segments: Number of message segments, from section 3
+    :param int n_subsets: Number of data subsets, from section 3
     :param bool compressed: Whether message data is compressed or not, from section 3
     :raises NotImplementedError: if the message contains operator descriptors
     :raises NotImplementedError: if the message contains sequence descriptors
@@ -335,10 +335,8 @@ def decode_section4(stream, descriptors, n_segments=1, compressed=False):
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
         return values
     
-    segments = []
-    for i in range(n_segments):
-        segments.append(BufrSegment(decode(bits, iter(descriptors))))
-    return Section4(length, segments)
+    subsets = [BufrSubset(decode(bits, iter(descriptors))) for _ in range(n_subsets)]
+    return Section4(length, subsets)
 
 def decode_section5(stream):
     """

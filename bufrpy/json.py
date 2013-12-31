@@ -42,19 +42,19 @@ def to_json(msg):
     for i,descriptor in enumerate(flat_descriptors):
         descriptor_index[descriptor.code] = i
 
-    def to_json_data(segments):
-        return [to_json_segment(segment) for segment in segments]
+    def to_json_data(subsets):
+        return [to_json_subset(subset) for subset in subsets]
         
-    def to_json_segment(values):
+    def to_json_subset(values):
         result = []
         for el in values:
             if isinstance(el, list):
-                result.append(to_json_segment(el))
+                result.append(to_json_subset(el))
             else:
                 result.append({"desc":descriptor_index[el.descriptor.code], "val":el.raw_value})
         return result
 
-    result = {"descriptors":strong_descriptors, "data":to_json_data(msg.section4.segments)}
+    result = {"descriptors":strong_descriptors, "data":to_json_data(msg.section4.subsets)}
     return result
 
 def from_json(json_obj):
@@ -90,17 +90,17 @@ def from_json(json_obj):
 
     flat_descriptors = flatten_descriptors(descriptors)
 
-    def decode_data(segments):
-        return [decode_segment(segment) for segment in segments]
+    def decode_data(subsets):
+        return [decode_subset(subset) for subset in subsets]
 
-    def decode_segment(json_data):
+    def decode_subset(json_data):
         result = []
         for el in json_data:
             if isinstance(el, dict):
                 descriptor = flat_descriptors[el["desc"]]
                 result.append(_decode_raw_value(el["val"], descriptor))
             else:
-                result.append(decode_segment(el))
+                result.append(decode_subset(el))
         return result
 
     data = decode_data(json_obj["data"])
