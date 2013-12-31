@@ -295,6 +295,10 @@ def decode_section4(stream, descriptors, n_segments=1, compressed=False):
     :raises NotImplementedError: if the message contains operator descriptors
     :raises NotImplementedError: if the message contains sequence descriptors
     """
+
+    if compressed:
+        raise NotImplementedError("Cannot read compressed data")
+
     from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
