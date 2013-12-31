@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from bufrpy.util import ByteStream, ReadableStream, int2fxy
-from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor
+from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor, SequenceDescriptor
 from bufrpy.template import Template
 from bufrpy.value import _decode_raw_value
 import itertools
@@ -310,7 +310,8 @@ def decode_section4(stream, descriptors):
             elif isinstance(descriptor, OperatorDescriptor):
                 raise NotImplementedError("Don't know what to do with operators: %s" % descriptor)
             elif isinstance(descriptor, SequenceDescriptor):
-                raise NotImplementedError("Don't know what to do with sequence descriptors: %s" % descriptor)
+                seq = decode(bits, descriptor.descriptors)
+                values.extend(seq)
             else:
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
         return values
