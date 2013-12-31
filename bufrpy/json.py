@@ -1,6 +1,19 @@
-from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, SequenceDescriptor
+from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, SequenceDescriptor, LazySequenceDescriptor, StrongSequenceDescriptor
 from bufrpy.value import _decode_raw_value
 from bufrpy.bufrdec import Message, Section3, Section4
+from bufrpy.util import int2fxy
+
+
+def flatten_descriptors(descriptors):
+    def _flatten_descriptors(descriptors):
+        result = set()
+        for d in descriptors:
+            if isinstance(d, SequenceDescriptor):
+                result |= _flatten_descriptors(d.descriptors)
+            else:
+                result.add(d)
+        return result
+    return list(sorted(_flatten_descriptors(descriptors), key=lambda x: x.code))
 
 def to_json(msg):
     """Convert a BUFR message into JSON-encodable form.
@@ -18,9 +31,16 @@ def to_json(msg):
     :rtype: dict
 
     """
-    descriptor_index = {}
-    for i,descriptor in enumerate(msg.section3.descriptors):
-        descriptor_index[descriptor] = i
+
+    # Strongify the descriptors, lazy sequence descriptors would be difficult to handle otherwise
+    # TODO Move strongifying to section 3 decoding
+    strong_descriptors = [descriptor.strong() for descriptor in msg.section3.descriptors]
+
+    flat_descriptors = flatten_descriptors(strong_descriptors)
+
+    descriptor_index = {} # code -> index
+    for i,descriptor in enumerate(flat_descriptors):
+        descriptor_index[descriptor.code] = i
 
     def to_json_data(data):
         result = []
@@ -28,10 +48,10 @@ def to_json(msg):
             if isinstance(el, list):
                 result.append(to_json_data(el))
             else:
-                result.append({"desc":descriptor_index[el.descriptor], "val":el.raw_value})
+                result.append({"desc":descriptor_index[el.descriptor.code], "val":el.raw_value})
         return result
 
-    result = {"descriptors":msg.section3.descriptors, "data":to_json_data(msg.section4.data)}
+    result = {"descriptors":strong_descriptors, "data":to_json_data(msg.section4.data)}
     return result
 
 def from_json(json_obj):
@@ -48,18 +68,30 @@ def from_json(json_obj):
     :rtype: Message
 
     """
-    descriptor_types = {0:ElementDescriptor, 1:ReplicationDescriptor, 2:OperatorDescriptor, 3:SequenceDescriptor}
-    descriptors = []
-    for descriptor_def in json_obj["descriptors"]:
+
+    def sequence_decoder(code, length, codes, significance, sub_descriptors):
+        sub_descriptors = [decode_descriptor(s) for s in sub_descriptors]
+        return StrongSequenceDescriptor(code, length, codes, significance, sub_descriptors)
+
+    descriptor_types = {0:ElementDescriptor, 1:ReplicationDescriptor, 2:OperatorDescriptor, 3:sequence_decoder}
+    def decode_descriptor(descriptor_def):
+        descriptors = []
         dtype = descriptor_def[0] >> 14 & 0x3
         klass = descriptor_types[dtype]
-        descriptors.append(klass(*descriptor_def))
+        return descriptor_types[dtype](*descriptor_def)
+
+        
+    descriptors = []
+    for descriptor_def in json_obj["descriptors"]:
+        descriptors.append(decode_descriptor(descriptor_def))
+
+    flat_descriptors = flatten_descriptors(descriptors)
 
     def decode_data(json_data):
         result = []
         for el in json_data:
             if isinstance(el, dict):
-                descriptor = descriptors[el["desc"]]
+                descriptor = flat_descriptors[el["desc"]]
                 result.append(_decode_raw_value(el["val"], descriptor))
             else:
                 result.append(decode_data(el))
