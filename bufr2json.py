@@ -8,15 +8,23 @@ import sys
 import time
 import codecs
 
-try:
-    # First try reading as safnwc template
-    b_table = safnwc.read_template(codecs.open(sys.argv[1], 'rb', 'utf-8'))
-except Exception as e:
-    # Try reading as libbufr table
-    b_table = libbufr.read_b_table(codecs.open(sys.argv[1], 'rb', 'utf-8'))
+bufr_fname = None
+if len(sys.argv) == 4:
+    # b-table and d-table
+    table = libbufr.read_tables(codecs.open(sys.argv[1], 'rb', 'utf-8'), codecs.open(sys.argv[2], 'rb', 'utf-8'))
+    bufr_fname = sys.argv[3]
+else:
+    # either just b-table or a template file
+    bufr_fname = sys.argv[2]
+    try:
+        # First try reading as safnwc template
+        table = safnwc.read_template(codecs.open(sys.argv[1], 'rb', 'utf-8'))
+    except Exception as e:
+        # Try reading as libbufr table
+        table = libbufr.read_tables(codecs.open(sys.argv[1], 'rb', 'utf-8'))
 t_0 = time.time()
 
-msg = bufrpy.bufrdec_file(open(sys.argv[2], 'rb'), b_table)
+msg = bufrpy.bufrdec_file(open(bufr_fname, 'rb'), table)
 t_1 = time.time()
 
 if msg.section3.n_subsets > 1:
