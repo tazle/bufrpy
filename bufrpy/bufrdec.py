@@ -90,16 +90,23 @@ class Section3(namedtuple("_Section3", ["length", "n_subsets", "flags", "descrip
     """
     __slots__ = ()
 
-class Section4(namedtuple("_Section4", ["length", "data"])):
+class Section4(namedtuple("_Section4", ["length", "segments"])):
     """
     Section 4 of a BUFR message.
 
     Section 4 contains the actual message data.
 
     :ivar int length: Length of Section 4
-    :ivar data: Message data as a list of BufrValues.
+    :ivar segments: Message data as a list of BufrSegments.
     """
     __slots__ = ()
+
+class BufrSegment(namedtuple("_BufrSegment", ["values"])):
+    """
+    Single BUFR message segment
+
+    :ivar values: Segment data as a list of BufrValues.
+    """
 
 class Section5(namedtuple("_Section5", ["data"])):
     """
@@ -274,12 +281,14 @@ def decode_section3(stream, descriptor_table):
     return Section3(length, n_subsets, flags, descriptors)
 
 
-def decode_section4(stream, descriptors):
+def decode_section4(stream, descriptors, n_segments=1, compressed=False):
     """
     Decode Section 4, the data section, of a BUFR message into a :class:`.Section4` object.
 
     :param ReadableStream stream: BUFR message, starting at section 4
     :param descriptors: List of descriptors specifying message structure
+    :param int n_segments: Number of message segments, from section 3
+    :param bool compressed: Whether message data is compressed or not, from section 3
     :raises NotImplementedError: if the message contains operator descriptors
     :raises NotImplementedError: if the message contains sequence descriptors
     """
@@ -318,9 +327,11 @@ def decode_section4(stream, descriptors):
             else:
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
         return values
-
-    values = decode(bits, iter(descriptors))
-    return Section4(length, values)
+    
+    segments = []
+    for i in range(n_segments):
+        segments.append(BufrSegment(decode(bits, iter(descriptors))))
+    return Section4(length, segments)
 
 def decode_section5(stream):
     """
