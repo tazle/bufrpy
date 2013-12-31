@@ -49,6 +49,19 @@ class OperatorDescriptor(namedtuple('OperatorDescriptor', ['code', 'length', 'op
         return self
 
 class SequenceDescriptor(object):
+    """Describes a fixed sequence of elements in compact form
+
+    Similar to a replication with count 1, but the encoded form is
+    more compact, since the sequence of fields is implicit. Except
+    that at least in NWCSAF Templates the constituent elements of the
+    sequence are also present in the template.
+
+    :ivar int code: Descriptor code
+    :ivar int length: Length of data, sum of lengths of constituent descriptors
+    :ivar int descriptor_codes: Sequence containing constituent descriptor codes
+    :ivar str significance: Meaning of the sequence, always empty string
+    :ivar descriptors: Sequence containing constituent descriptors.
+    """
     __metaclass__ = ABCMeta
 
     @abstractproperty
@@ -72,18 +85,8 @@ class SequenceDescriptor(object):
         pass
 
 class StrongSequenceDescriptor(namedtuple('_SequenceDescriptor', ['code', 'length', 'descriptor_codes', 'significance', 'descriptors']), SequenceDescriptor):
-    """Describes a fixed sequence of elements in compact form
-
-    Similar to a replication with count 1, but the encoded form is
-    more compact, since the sequence of fields is implicit. Except
-    that at least in NWCSAF Templates the constituent elements of the
-    sequence are also present in the template.
-
-    :ivar int code: Descriptor code
-    :ivar int length: Length of data, sum of lengths of constituent descriptors
-    :ivar int descriptor_codes: Tuple containing constituent descriptor codes
-    :ivar str significance: Meaning of the sequence, always empty string
-    :ivar descriptors: Tuple containing constituent descriptors.
+    """
+    SequenceDescriptor with direct references to child descriptors
     """
     __slots__ = ()
 
@@ -91,18 +94,8 @@ class StrongSequenceDescriptor(namedtuple('_SequenceDescriptor', ['code', 'lengt
         return self
 
 class LazySequenceDescriptor(namedtuple('_LazySequenceDescriptor', ['code', 'descriptor_codes', 'significance', 'descriptor_table']), SequenceDescriptor):
-    """Describes a fixed sequence of elements in compact form
-
-    Similar to a replication with count 1, but the encoded form is
-    more compact, since the sequence of fields is implicit. Except
-    that at least in NWCSAF Templates the constituent elements of the
-    sequence are also present in the template.
-
-    :ivar int code: Descriptor code
-    :ivar int length: Length of data, sum of lengths of constituent descriptors
-    :ivar int descriptor_codes: List containing constituent descriptor codes
-    :ivar str significance: Meaning of the sequence, always empty string
-    :ivar descriptors: Tuple containing constituent descriptors. Lazily generated.
+    """
+    SequenceDescriptor with lazy references to child descriptors though the descriptor table
     """
 
     @property
