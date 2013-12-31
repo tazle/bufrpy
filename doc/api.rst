@@ -74,7 +74,7 @@ BUFR values are represented a instances of :py:class:`.BufrValue`.
 Reading BUFR tables
 -------------------
 
-.. autofunction:: bufrpy.table.libbufr.read_b_table
+.. autofunction:: bufrpy.table.libbufr.read_tables
 
 Reading BUFR templates
 ----------------------
