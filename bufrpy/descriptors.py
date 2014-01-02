@@ -1,3 +1,4 @@
+from bufrpy.util import int2fxy
 from collections import namedtuple
 from abc import ABCMeta, abstractproperty
 
@@ -104,7 +105,10 @@ class LazySequenceDescriptor(namedtuple('_LazySequenceDescriptor', ['code', 'des
 
     @property
     def descriptors(self):
-        return tuple(self.descriptor_table[code] for code in self.descriptor_codes)
+        try:
+            return [self.descriptor_table[code] for code in self.descriptor_codes]
+        except KeyError as e:
+            raise KeyError("No descriptor for code " + int2fxy(e.args[0]))
 
     def strong(self):
         return StrongSequenceDescriptor(self.code, self.length, self.descriptor_codes, self.significance, tuple(d.strong() for d in self.descriptors))
