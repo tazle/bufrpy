@@ -1,6 +1,35 @@
 from bufrpy.util import int2fxy
 from collections import namedtuple
 from abc import ABCMeta, abstractproperty
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
+
+class DescriptorTable(Mapping):
+    """
+    Descriptor table that provides lookups for replication descriptors.
+
+    Passes non-replication descrtiptor lookups on to a mapping supplied at creation time.
+    """
+    def __init__(self, table):
+        self.table = table
+
+    def __getitem__(self, code):
+        f = (code >> 14) & 0x3
+        if f == 1:
+            # Replication descriptor
+            x = (code >> 8) & 0x3f
+            y = code & 0xff
+            return ReplicationDescriptor(code, 0, x, y, "")
+        else:
+            return self.table[code]
+
+    def __iter__(self, code):
+        return iter(self.table)
+
+    def __len__(self, code):
+        return len(self.table)
 
 class ElementDescriptor(namedtuple('_ElementDescriptor', ['code', 'length', 'scale', 'ref', 'significance', 'unit'])):
     """Describes single value
