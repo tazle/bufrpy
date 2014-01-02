@@ -324,13 +324,81 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
             elif isinstance(descriptor, OperatorDescriptor):
                 raise NotImplementedError("Don't know what to do with operators: %s" % descriptor)
             elif isinstance(descriptor, SequenceDescriptor):
-                seq = decode(bits, descriptor.descriptors)
+                seq = decode(bits, iter(descriptor.descriptors))
                 values.extend(seq)
             else:
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
         return values
-    
-    subsets = [BufrSubset(decode(bits, iter(descriptors))) for _ in range(n_subsets)]
+
+    def decode_compressed(bits, descriptors, n_subsets):
+        """
+        :param bits: Bit stream to decode from
+        :param descriptors: Descriptor iterator
+        :param n_subsets: Number of subsets to decode
+        """
+        subsets = [[] for x in range(n_subsets)]
+        for descriptor in descriptors:
+            if isinstance(descriptor, ElementDescriptor):
+                if descriptor.unit == 'CCITTIA5':
+                    ref_value = Bits._readhex(bits, descriptor.length, bits.pos)
+                else:
+                    ref_value = Bits._readuint(bits, descriptor.length, bits.pos)
+                bits.pos += descriptor.length
+
+                n_bits = Bits._readuint(bits, 6, bits.pos)
+                bits.pos += 6
+                
+                for i in range(n_subsets):
+                    if descriptor.unit == 'CCITTIA5':
+                        n_chars = n_bits
+                        if n_chars:
+                            raw_value = Bits._readhex(bits, descriptor.length, bits.pos)
+                            bits.pos += n_chars*8
+                            value = _decode_raw_value(raw_value, descriptor)
+                        else:
+                            value = _decode_raw_value(ref_value, descriptor)
+                    else:
+                        if n_bits:
+                            increment = Bits._readuint(bits, n_bits, bits.pos)
+                            bits.pos += n_bits
+                            if increment ^ ((1 << n_bits)-1) == 0: # Missing value, all-ones
+                                value = _decode_raw_value((1 << descriptor.length)-1, descriptor)
+                            else:
+                                value = _decode_raw_value(ref_value + increment, descriptor)
+                        else:
+                            value = _decode_raw_value(ref_value, descriptor)
+                    subsets[i].append(value)
+            elif isinstance(descriptor, ReplicationDescriptor):
+                aggregations = [[] for x in range(n_subsets)]
+                if descriptor.count:
+                    count = descriptor.count
+                else:
+                    raw = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets)
+                    print("replication counts:",raw)
+                    count = raw[0][0].value
+                n_fields = descriptor.fields
+                field_descriptors = list(itertools.islice(descriptors, n_fields))
+                for _ in range(count):
+                    replication = decode_compressed(bits, iter(field_descriptors), n_subsets)
+                    for subset_idx in range(n_subsets):
+                        aggregations[subset_idx].append(replication[subset_idx])
+                for subset_idx in range(n_subsets):
+                    subsets[subset_idx].append(aggregations[subset_idx])
+            elif isinstance(descriptor, OperatorDescriptor):
+                raise NotImplementedError("Don't know what to do with operators: %s" % descriptor)
+            elif isinstance(descriptor, SequenceDescriptor):
+                comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets)
+                print("compressed sequences:",comp)
+                for i,subset in enumerate(comp):
+                    subsets[i].extend(subset)
+            else:
+                raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
+        return subsets
+
+    if compressed:
+        subsets = [BufrSubset(x) for x in decode_compressed(bits, iter(descriptors), n_subsets)]
+    else:
+        subsets = [BufrSubset(decode(bits, iter(descriptors))) for _ in range(n_subsets)]
     return Section4(length, subsets)
 
 def decode_section5(stream):
