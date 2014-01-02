@@ -66,7 +66,7 @@ def read_tables(b_line_stream, d_line_stream=None):
             constituent_codes = []
             for line in lines:
                 l_parts = slices(line, [1,6,1,2,1,6])
-                constituent_codes.append(fxy2int(parts[5]))
+                constituent_codes.append(fxy2int(l_parts[5]))
 
             descriptors[d_descriptor_code] = LazySequenceDescriptor(d_descriptor_code, constituent_codes, '', table)
     return table
