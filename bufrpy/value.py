@@ -22,3 +22,10 @@ def _decode_raw_value(raw_value, descriptor):
         else:
             value = 10**-descriptor.scale * (raw_value + descriptor.ref)
     return BufrValue(raw_value, value, descriptor)
+
+class BufrSubset(namedtuple("_BufrSubset", ["values"])):
+    """
+    Single BUFR message data subset
+
+    :ivar values: Subset data as a list of BufrValues.
+    """

@@ -3,7 +3,7 @@ from __future__ import print_function
 from bufrpy.util import ByteStream, ReadableStream, int2fxy
 from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor, SequenceDescriptor
 from bufrpy.template import Template
-from bufrpy.value import _decode_raw_value
+from bufrpy.value import _decode_raw_value, BufrSubset
 import itertools
 from collections import namedtuple, defaultdict
 import re
@@ -104,12 +104,6 @@ class Section4(namedtuple("_Section4", ["length", "subsets"])):
     """
     __slots__ = ()
 
-class BufrSubset(namedtuple("_BufrSubset", ["values"])):
-    """
-    Single BUFR message data subset
-
-    :ivar values: Subset data as a list of BufrValues.
-    """
 
 class Section5(namedtuple("_Section5", ["data"])):
     """
@@ -296,9 +290,6 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     :raises NotImplementedError: if the message contains sequence descriptors
     """
 
-    if compressed:
-        raise NotImplementedError("Cannot read compressed data")
-
     from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
@@ -306,6 +297,10 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     bits = ConstBitStream(bytes=data)
 
     def decode(bits, descriptors):
+        """
+        :param bits: Bit stream to decode from
+        :param descriptors: Descriptor iterator
+        """
         values = []
         for descriptor in descriptors:
             if isinstance(descriptor, ElementDescriptor):

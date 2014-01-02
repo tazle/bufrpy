@@ -1,5 +1,5 @@
 from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, SequenceDescriptor, LazySequenceDescriptor, StrongSequenceDescriptor
-from bufrpy.value import _decode_raw_value
+from bufrpy.value import _decode_raw_value, BufrSubset
 from bufrpy.bufrdec import Message, Section3, Section4
 from bufrpy.util import int2fxy
 
@@ -43,7 +43,7 @@ def to_json(msg):
         descriptor_index[descriptor.code] = i
 
     def to_json_data(subsets):
-        return [to_json_subset(subset) for subset in subsets]
+        return [to_json_subset(subset.values) for subset in subsets]
         
     def to_json_subset(values):
         result = []
@@ -91,7 +91,7 @@ def from_json(json_obj):
     flat_descriptors = flatten_descriptors(descriptors)
 
     def decode_data(subsets):
-        return [decode_subset(subset) for subset in subsets]
+        return [BufrSubset(decode_subset(subset)) for subset in subsets]
 
     def decode_subset(json_data):
         result = []
