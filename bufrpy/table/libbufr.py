@@ -1,5 +1,5 @@
 from bufrpy.util import slices, fxy2int, fxy, int2fxy
-from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, LazySequenceDescriptor
+from bufrpy.descriptors import ElementDescriptor, ReplicationDescriptor, OperatorDescriptor, LazySequenceDescriptor, DescriptorTable
 
 def read_tables(b_line_stream, d_line_stream=None):
     """
@@ -51,6 +51,8 @@ def read_tables(b_line_stream, d_line_stream=None):
                 buf.append(line)
         yield buf
 
+    table = DescriptorTable(descriptors) # descriptors is not copied, just referenced 
+
     if d_line_stream:
         for lines in group_d_lines(d_line_stream):
             # Format inferred
@@ -66,6 +68,6 @@ def read_tables(b_line_stream, d_line_stream=None):
                 l_parts = slices(line, [1,6,1,2,1,6])
                 constituent_codes.append(fxy2int(parts[5]))
 
-            descriptors[d_descriptor_code] = LazySequenceDescriptor(d_descriptor_code, constituent_codes, '', descriptors)
-    return descriptors
+            descriptors[d_descriptor_code] = LazySequenceDescriptor(d_descriptor_code, constituent_codes, '', table)
+    return table
 
