@@ -275,6 +275,10 @@ def decode_section3(stream, descriptor_table):
         descriptors = _decode_descriptors_template(length-7, stream, descriptor_table)
     else:
         descriptors = _decode_descriptors_table(length-7, stream, descriptor_table)
+
+    # Strongify the descriptors, lazy sequence descriptors would be difficult to handle otherwise
+    descriptors = [descriptor.strong() for descriptor in descriptors]
+
     return Section3(length, n_subsets, flags, descriptors)
 
 

@@ -32,11 +32,7 @@ def to_json(msg):
 
     """
 
-    # Strongify the descriptors, lazy sequence descriptors would be difficult to handle otherwise
-    # TODO Move strongifying to section 3 decoding
-    strong_descriptors = [descriptor.strong() for descriptor in msg.section3.descriptors]
-
-    flat_descriptors = flatten_descriptors(strong_descriptors)
+    flat_descriptors = flatten_descriptors(msg.section3.descriptors)
 
     descriptor_index = {} # code -> index
     for i,descriptor in enumerate(flat_descriptors):
@@ -54,7 +50,7 @@ def to_json(msg):
                 result.append({"desc":descriptor_index[el.descriptor.code], "val":el.raw_value})
         return result
 
-    result = {"descriptors":strong_descriptors, "data":to_json_data(msg.section4.subsets)}
+    result = {"descriptors":msg.section3.descriptors, "data":to_json_data(msg.section4.subsets)}
     return result
 
 def from_json(json_obj):
