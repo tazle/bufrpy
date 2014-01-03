@@ -66,9 +66,13 @@ repetitions of a set of descriptors by
 BUFR Values
 ...........
 
-BUFR values are represented a instances of :py:class:`.BufrValue`.
+BUFR values are represented a instances of :py:class:`.BufrValue`. The
+values of one BUFR message subset are contained in a
+:py:class:`.BufrSubset`.
 
 .. autoclass:: bufrpy.value.BufrValue
+
+.. autoclass:: bufrpy.value.BufrSubset
 
 
 Reading BUFR tables
