@@ -11,6 +11,7 @@ setup(name="bufrpy",
       zip_safe=False,
       keywords=["bufr"],
       install_requires=["bitstring>=3.1.2"],
+      test_suite="tests",
       classifiers=[
           "Programming Language :: Python",
           "Programming Language :: Python :: 3",
