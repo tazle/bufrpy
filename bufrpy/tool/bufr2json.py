@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
 import bufrpy
 from bufrpy.template import safnwc
@@ -22,14 +23,9 @@ else:
     except Exception as e:
         # Try reading as libbufr table
         table = libbufr.read_tables(codecs.open(sys.argv[1], 'rb', 'utf-8'))
-t_0 = time.time()
 
 msg = bufrpy.bufrdec_file(open(bufr_fname, 'rb'), table)
-t_1 = time.time()
-
 out = json.dumps(bufrpy.to_json(msg))
-t_2 = time.time()
 dec = bufrpy.from_json(json.loads(out))
-t_3 = time.time()
 
 print(out)
