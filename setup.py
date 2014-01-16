@@ -8,7 +8,6 @@ setup(name="bufrpy",
       url="https://github.com/tazle/bufrpy",
       author="Tuure Laurinolli / FMI",
       author_email="tuure.laurinolli@fmi.fi",
-      license="MIT",
       zip_safe=False,
       keywords=["bufr"],
       install_requires=["bitstring>=3.1.2"],
@@ -16,7 +15,7 @@ setup(name="bufrpy",
           "Programming Language :: Python",
           "Programming Language :: Python :: 3",
           "Intended Audience :: Developers",
-          "License :: OSI Approved :: MIT License",
+          "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
           "Topic :: Scientific/Engineering"
       ])
 
