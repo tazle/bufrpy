@@ -3,5 +3,6 @@ python:
   - "3.3"
   - "2.7"
   - "2.6"
+  - "pypy"
 install: pip install bitstring
 script: python setup.py test
