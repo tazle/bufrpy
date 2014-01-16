@@ -2,6 +2,8 @@ bufrpy - Pure Python BUFR decoder
 
 Copyright (C) 2013-2014   Finnish Meteorological Institute
 
+Test data under data/ copied from Geo::BUFR and used under GPL license.
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
