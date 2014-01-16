@@ -1,5 +1,7 @@
 # Emacs
 *~
+.emacs.desktop
+.emacs.desktop.lock
 
 # Python
 *.py[cod]
