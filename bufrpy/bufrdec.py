@@ -378,7 +378,6 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                     count = descriptor.count
                 else:
                     raw = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets)
-                    print("replication counts:",raw)
                     count = raw[0][0].value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
@@ -392,7 +391,6 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                 raise NotImplementedError("Don't know what to do with operators: %s" % descriptor)
             elif isinstance(descriptor, SequenceDescriptor):
                 comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets)
-                print("compressed sequences:",comp)
                 for i,subset in enumerate(comp):
                     subsets[i].extend(subset)
             else:
