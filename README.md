@@ -31,3 +31,8 @@ Documentation
 =============
 
 See http://bufrpy.readthedocs.org/en/latest/
+
+CI
+==
+
+See https://travis-ci.org/tazle/bufrpy
