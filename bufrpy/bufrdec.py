@@ -220,14 +220,17 @@ def decode_section2(stream):
 def _decode_descriptors_table(length, stream, descriptor_table):
     # length is remaining length of descriptor field in bytes
     n_read = 0
-    descriptors = []
+    codes = []
     while n_read + 2 <= length:
-        code = stream.readint(2)
+        codes.append(stream.readint(2))
+        n_read += 2
+
+    descriptors = []
+    for code in codes:
         try:
             descriptors.append(descriptor_table[code])
         except KeyError as e:
             raise KeyError("Missing definition for descriptor " + int2fxy(code))
-        n_read += 2
 
     # read final byte, since length of the section should be even and
     # descriptors start at odd offset
