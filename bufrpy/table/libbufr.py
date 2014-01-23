@@ -18,6 +18,11 @@ def read_tables(b_line_stream, d_line_stream=None):
     for line in b_line_stream:
         # Format from btable.F:146 in libbufr version 000400
         parts = slices(line, [1,6,1,64,1,24,1,3,1,12,1,3])
+        if not parts[11]:
+            # Geo::BUFR skips lines without bit width definition,
+            # libbufr defaults bit width to 0
+            # choosing to skip here
+            continue
         raw_descriptor = parts[1]
         descriptor_code = fxy2int(raw_descriptor)
         significance = parts[3].strip()
