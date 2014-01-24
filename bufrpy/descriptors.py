@@ -241,6 +241,9 @@ class ElementDescriptor(namedtuple('_ElementDescriptor', ['code', 'length', 'sca
     def strong(self):
         return self
 
+    def code_descriptor(self):
+        return 'FLAG' in self.unit or 'TABLE' in self.unit
+
 class ReplicationDescriptor(namedtuple('ReplicationDescriptor', ['code', 'length', 'fields', 'count', 'significance'])):
     """Describes a repeating collection of values
     
