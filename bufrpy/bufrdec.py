@@ -1,9 +1,9 @@
 from __future__ import print_function
 
 from bufrpy.util import ByteStream, ReadableStream, int2fxy
-from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor, SequenceDescriptor
+from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor, SequenceDescriptor, OpCode
 from bufrpy.template import Template
-from bufrpy.value import _decode_raw_value, BufrSubset
+from bufrpy.value import _decode_raw_value, _calculate_read_length, BufrSubset
 import itertools
 from collections import namedtuple, defaultdict
 import re
@@ -303,35 +303,80 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     data = stream.readbytes(length-4)
     bits = ConstBitStream(bytes=data)
 
-    def decode(bits, descriptors):
+
+    def decode(bits, descriptors, operators, descriptor_overlay):
         """
         :param bits: Bit stream to decode from
         :param descriptors: Descriptor iterator
+        :param dict operators: Operators in effect, indexed by opcode
+        :param dict descriptor_overlay: Overlay descriptors affected by CHANGE_REFERENCE_VALUES operator
         """
         values = []
         for descriptor in descriptors:
+            descriptor = descriptor_overlay.get(descriptor.code, descriptor)
             if isinstance(descriptor, ElementDescriptor):
+                op_crf = operators.get(OpCode.CHANGE_REFERENCE_VALUES, None)
+                if op_crf is not None:
+                    ref_value = Bits._readuint(bits, op_crf.bits(), bits.pos)
+                    bits.pos += op_crf.bits()
+                    top_bit_mask = (1 << op_crf.bits()-1)
+                    if refval & top_bit_mask:
+                        ref_value = -(ref_value & ~top_bit_mask)
+                    overlay_descriptor = ElementDescriptor(descriptor.code, descriptor.length, descriptor.scale, ref_value, descriptor.significance, descriptor.unit)
+                    descriptor_overlay[descriptor.code] = overlay_descriptor
+                    continue
+                
+                op_aaf = operators.get(OpCode.ADD_ASSOCIATED_FIELD, None)
+                if op_aaf is not None and descriptor.code != fxy2int("031021"):
+                    # Don't apply to ASSOCIATED FIELD SIGNIFICANCE
+                    associated_value = Bits._readuint(bits, op_aaf.bits(), bits.pos)
+                    bits.pos += op_aaf.bits()
+                    # Use dummy descriptor 999999 for associated field, like Geo::BUFR and libbufr
+                    dummy_descriptor = ElementDescriptor(fxy2int("999999"), op_aaf.bits(), 0, 0, "ASSOCIATED FIELD", "NUMERIC")
+                    values.append(BufrValue(associated_value, associated_value, dummy_descriptor))
+
+                read_length = _calculate_read_length(descriptor, operators)
                 if descriptor.unit == 'CCITTIA5':
                     raw_value = Bits._readhex(bits, descriptor.length, bits.pos)
                 else:
                     raw_value = Bits._readuint(bits, descriptor.length, bits.pos)
-                bits.pos += descriptor.length
-                values.append(_decode_raw_value(raw_value, descriptor))
+                bits.pos += read_length
+                values.append(_decode_raw_value(raw_value, descriptor, operators))
             elif isinstance(descriptor, ReplicationDescriptor):
                 aggregation = []
                 if descriptor.count:
                     count = descriptor.count
                 else:
-                    count = decode(bits, itertools.islice(descriptors, 1))[0].value
+                    count = decode(bits, itertools.islice(descriptors, 1), {}, {})[0].value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
                 for _ in range(count):
-                    aggregation.append(decode(bits, iter(field_descriptors)))
+                    aggregation.append(decode(bits, iter(field_descriptors), operators, descriptor_overlay))
                 values.append(aggregation)
             elif isinstance(descriptor, OperatorDescriptor):
-                raise NotImplementedError("Don't know what to do with operators: %s" % descriptor)
+                op = descriptor.operator
+                if op.immediate:
+                    if op.opcode == OpCode.SIGNIFY_CHARACTER:
+                        raw_value = Bits._readhex(bits, op.bits(), bits.pos)
+                        bits.pos += op.bits()
+                        char_descriptor = ElementDescriptor(fxy2int(op.code), op.bits(), 0, 0, "CHARACTER INFORMATION", "CCITTIA5")
+                        value = _decode_raw_value(raw_value, char_descriptor, {})
+                        values.append(value)
+                    elif op.opcode == OpCode.SIGNIFY_LOCAL_DESCRIPTOR:
+                        base_descriptor = itertools.islice(descriptors, 1)[0]
+                        mod_descriptor = ElementDescriptor(base_descriptor.code, op.bits(), base_descriptor.scale, base_descriptor.ref, base_descriptor.significance, base_descriptor.unit)
+                        values.add(decode(bits, descriptors, {}, {})[0].value)
+                        
+                    else:
+                        raise NotImplementedError("Unknown immediate operator: %s" % str(descriptor))
+                else:
+                    op.check_conflict(operators)
+                    if op.neutral():
+                        del operators[op.opcode]
+                    else:
+                        operators[op.opcode] = op
             elif isinstance(descriptor, SequenceDescriptor):
-                seq = decode(bits, iter(descriptor.descriptors))
+                seq = decode(bits, iter(descriptor.descriptors), operators, descriptor_overlay)
                 values.extend(seq)
             else:
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
@@ -403,7 +448,7 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     if compressed:
         subsets = [BufrSubset(x) for x in decode_compressed(bits, iter(descriptors), n_subsets)]
     else:
-        subsets = [BufrSubset(decode(bits, iter(descriptors))) for _ in range(n_subsets)]
+        subsets = [BufrSubset(decode(bits, iter(descriptors), {}, {})) for _ in range(n_subsets)]
     return Section4(length, subsets)
 
 def decode_section5(stream):
