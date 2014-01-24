@@ -32,6 +32,16 @@ Usage examples
 
    examples
 
+Data Model
+----------
+
+Data model
+
+.. toctree::
+   :maxdepth: 2
+
+   datamodel
+
 API Documentation
 -----------------
 
