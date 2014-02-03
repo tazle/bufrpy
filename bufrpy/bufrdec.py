@@ -285,6 +285,18 @@ def decode_section3(stream, descriptor_table):
     return Section3(length, n_subsets, flags, descriptors)
 
 
+def skip_section4(stream):
+    """
+    Skip Section 4
+    :return: None
+    """
+
+    from bitstring import ConstBitStream, Bits
+    length = stream.readint(3)
+    pad = stream.readint(1)
+    data = stream.readbytes(length-4)
+    return
+
 def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     """
     Decode Section 4, the data section, of a BUFR message into a :class:`.Section4` object.
@@ -530,7 +542,7 @@ def bufrdec_all(stream, b_table):
             pass
     return messages, errors
 
-def bufrdec(stream, b_table):
+def bufrdec(stream, b_table, skip_data=False):
     """ 
     Decode BUFR message from stream into a :class:`.Message` object.
 
@@ -538,6 +550,7 @@ def bufrdec(stream, b_table):
 
     :param ByteStream stream: Stream that contains the bufr message
     :param Mapping|Template b_table: Either a mapping from BUFR descriptor codes to descriptors or a Template describing the message
+    :param bool skip_data: Skip decoding data? Can be used to get only extract metadata of a file to e.g. analysis of decoding errors.
     """
 
     rs = ReadableStream(stream)
@@ -553,7 +566,10 @@ def bufrdec(stream, b_table):
     else:
         section2 = None
     section3 = decode_section3(rs, b_table)
-    section4 = decode_section4(rs, section3.descriptors, section3.n_subsets, section3.flags & FLAG_COMPRESSED)
+    if skip_data:
+        section4 = skip_section4(rs)
+    else:
+        section4 = decode_section4(rs, section3.descriptors, section3.n_subsets, section3.flags & FLAG_COMPRESSED)
     section5 = decode_section5(rs)
     return Message(section0, section1, section2, section3, section4, section5)
 
