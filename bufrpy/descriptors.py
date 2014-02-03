@@ -153,7 +153,7 @@ class SignifyLocalDescriptor(Operator):
 
 class IncreaseSrw(Operator):
     opcode = 7
-    description = "Signify data width for the immediately following local descriptor"
+    description = "Increase scale, reference value and data width"
     immediate = False
 
     def __init__(self, operand):
