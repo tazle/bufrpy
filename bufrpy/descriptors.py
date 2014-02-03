@@ -147,7 +147,7 @@ class SignifyLocalDescriptor(Operator):
         # Immediate operator, won't be saved
         return True
 
-    def check_conflicts(self, operators):
+    def check_conflict(self, operators):
         # Immediate operator, no conflicts
         pass
 
@@ -171,7 +171,7 @@ class IncreaseSrw(Operator):
     def ref(self):
         return self.operand
 
-    def check_conflicts(self, operators):
+    def check_conflict(self, operators):
         self._check_conflict(operators, (self.opcode, OpCode.CHANGE_DATA_WIDTH, OpCode.CHANGE_SCALE, OpCode.CHANGE_REFERENCE_VALUES))
 
 class ChangeTextWidth(Operator):
@@ -189,7 +189,7 @@ class ChangeTextWidth(Operator):
         # The specification does not define a newutral value
         return False
 
-    def check_conflicts(self, operators):
+    def check_conflict(self, operators):
         # Neither is there any obvious conflict
         pass
 
