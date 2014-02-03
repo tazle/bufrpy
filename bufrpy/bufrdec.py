@@ -370,10 +370,10 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                     else:
                         raise NotImplementedError("Unknown immediate operator: %s" % str(descriptor))
                 else:
-                    op.check_conflict(operators)
                     if op.neutral():
                         del operators[op.opcode]
                     else:
+                        op.check_conflict(operators)
                         operators[op.opcode] = op
             elif isinstance(descriptor, SequenceDescriptor):
                 seq = decode(bits, iter(descriptor.descriptors), operators, descriptor_overlay)
