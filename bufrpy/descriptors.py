@@ -186,7 +186,7 @@ class ChangeTextWidth(Operator):
         return self.operand*8
 
     def neutral(self):
-        # The specification does not define a newutral value
+        # The specification does not define a neutral value
         return False
 
     def check_conflict(self, operators):
