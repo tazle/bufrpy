@@ -12,3 +12,8 @@ class TestReadBufr(unittest.TestCase):
     def test_multiple_segments(self):
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/3xBUFRSYNOP-com.bufr")
 
+    def test_uncompressed_operators(self):
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
+
+    def test_compressed_operators(self):
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003_compressed.bufr")
