@@ -26,13 +26,15 @@ class OpCode:
 
 operators = {}
 
-class Operator(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, dict):
-            type.__init__(cls, name, bases, dict)
-            if hasattr(cls, 'opcode'):
-                operators[cls.opcode] = cls
+class OperatorMeta(type):
+    def __init__(cls, name, bases, dict):
+        type.__init__(cls, name, bases, dict)
+        if hasattr(cls, 'opcode'):
+            operators[cls.opcode] = cls
 
+_Operator = OperatorMeta('_Operator', (object, ), {})
+
+class Operator(_Operator):
     def neutral(self):
         """
         Tell if this operator is "neutral", i.e. one that returns resets stateful operator
