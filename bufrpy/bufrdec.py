@@ -451,7 +451,7 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                     subsets[subset_idx].append(aggregations[subset_idx])
             elif isinstance(descriptor, OperatorDescriptor):
                 op = descriptor.operator
-                if op.opcode in (1,2):
+                if op.opcode in (1,2,7):
                     if op.neutral():
                         del operators[op.opcode]
                     else:
