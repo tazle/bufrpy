@@ -108,7 +108,7 @@ class ChangeReferenceValues(Operator):
         return self.operand
 
     def check_conflict(self, operators):
-        self._check_conflict(operators, (OpCode.INCREASE_ALL))
+        self._check_conflict(operators, (OpCode.INCREASE_SRW,))
 
 class AddAssociatedField(Operator):
     opcode = 4
