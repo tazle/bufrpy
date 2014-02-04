@@ -349,9 +349,9 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
 
                 read_length = _calculate_read_length(descriptor, operators)
                 if descriptor.unit == 'CCITTIA5':
-                    raw_value = Bits._readhex(bits, descriptor.length, bits.pos)
+                    raw_value = Bits._readhex(bits, read_length, bits.pos)
                 else:
-                    raw_value = Bits._readuint(bits, descriptor.length, bits.pos)
+                    raw_value = Bits._readuint(bits, read_length, bits.pos)
                 bits.pos += read_length
                 values.append(_decode_raw_value(raw_value, descriptor, operators))
             elif isinstance(descriptor, ReplicationDescriptor):
