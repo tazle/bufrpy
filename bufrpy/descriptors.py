@@ -187,7 +187,7 @@ class ChangeTextWidth(Operator):
     description = "Change width of CCITT IA5 field"
     immediate = False
 
-    def __init_(self, operand):
+    def __init__(self, operand):
         self.operand = operand
 
     def bits(self):
