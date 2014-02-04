@@ -309,6 +309,9 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
     :raises NotImplementedError: if the message contains sequence descriptors
     """
 
+    REPLICATION_DESCRIPTORS = set([fxy2int("031000"), fxy2int("031001"), fxy2int("031002")])
+    REPETITION_DESCRIPTORS = set([fxy2int("031011"), fxy2int("031012")])
+
     from bitstring import ConstBitStream, Bits
     length = stream.readint(3)
     pad = stream.readint(1)
@@ -357,13 +360,24 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
             elif isinstance(descriptor, ReplicationDescriptor):
                 aggregation = []
                 if descriptor.count:
+                    bval = None
                     count = descriptor.count
                 else:
-                    count = decode(bits, itertools.islice(descriptors, 1), {}, {})[0].value
+                    bval = decode(bits, itertools.islice(descriptors, 1), {}, {})[0]
+                    count = bval.value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
-                for _ in range(count):
-                    aggregation.append(decode(bits, iter(field_descriptors), operators, descriptor_overlay))
+                if bval is None or bval.descriptor.code in REPLICATION_DESCRIPTORS:
+                    # Regular replication, X elements repeated Y or <element value> times in the file
+                    for _ in range(count):
+                        aggregation.append(decode(bits, iter(field_descriptors), operators, descriptor_overlay))
+                elif bval.descriptor.code in REPETITION_DESCRIPTORS:
+                    # Repeated replication, X elements present once in the file, output <element value> times
+                    repeated_values = decode(bits, iter(field_descriptors), operators, descriptor_overlay)
+                    for _ in range(count):
+                        aggregation.append(repeated_values)
+                else:
+                    raise ValueError("Unexpected delayed replication element %s" %bval)
                 values.append(aggregation)
             elif isinstance(descriptor, OperatorDescriptor):
                 op = descriptor.operator
@@ -467,16 +481,29 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
             elif isinstance(descriptor, ReplicationDescriptor):
                 aggregations = [[] for x in range(n_subsets)]
                 if descriptor.count:
+                    bval = None
                     count = descriptor.count
                 else:
-                    raw = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets, {}, {})
-                    count = raw[0][0].value
+                    bval = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets, {}, {})[0][0]
+                    count = bval.value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
-                for _ in range(count):
+
+                if bval is None or bval.descriptor.code in REPLICATION_DESCRIPTORS:
+                    # Regular replication, X elements repeated Y or <element value> times in the file
+                    for _ in range(count):
+                        replication = decode_compressed(bits, iter(field_descriptors), n_subsets, operators, descriptor_overlay)
+                        for subset_idx in range(n_subsets):
+                            aggregations[subset_idx].append(replication[subset_idx])
+                elif bval.descriptor.code in REPETITION_DESCRIPTORS:
+                    # Repeated replication, X elements present once in the file, output <element value> times
                     replication = decode_compressed(bits, iter(field_descriptors), n_subsets, operators, descriptor_overlay)
-                    for subset_idx in range(n_subsets):
-                        aggregations[subset_idx].append(replication[subset_idx])
+                    for _ in range(count):
+                        for subset_idx in range(n_subsets):
+                            aggregations[subset_idx].append(replication[subset_idx])
+                else:
+                    raise ValueError("Unexpected delayed replication element %s" %bval)
+
                 for subset_idx in range(n_subsets):
                     subsets[subset_idx].append(aggregations[subset_idx])
             elif isinstance(descriptor, OperatorDescriptor):
