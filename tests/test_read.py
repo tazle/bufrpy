@@ -1,6 +1,6 @@
 import unittest
 import bufrpy
-from .util import read_file
+from .util import read_file, read_file_debug, flatten_descriptors
 
 class TestReadBufr(unittest.TestCase):
     def test_sequence(self):
