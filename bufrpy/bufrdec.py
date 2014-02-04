@@ -394,22 +394,43 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                 raise NotImplementedError("Unknown descriptor type: %s" % descriptor)
         return values
 
-    def decode_compressed(bits, descriptors, n_subsets, operators):
+    def decode_compressed(bits, descriptors, n_subsets, operators, descriptor_overlay):
         """
         :param bits: Bit stream to decode from
         :param descriptors: Descriptor iterator
         :param n_subsets: Number of subsets to decode
         :param dict operators: Operators in effect, indexed by opcode
+        :param dict descriptor_overlay: Overlay descriptors affected by CHANGE_REFERENCE_VALUES operator
         """
         subsets = [[] for x in range(n_subsets)]
         for descriptor in descriptors:
+            descriptor = descriptor_overlay.get(descriptor.code, descriptor)
+
             if isinstance(descriptor, ElementDescriptor):
+                op_crf = operators.get(OpCode.CHANGE_REFERENCE_VALUES, None)
+                if op_crf is not None:
+                    dummy_descriptors = iter([ElementDescriptor(fxy2int("999999"), op_crf.bits(), 0, 0, "ASSOCIATED FIELD", "NUMERIC")])
+                    _subsets = decode_compressed(bits, dummy_descriptors, n_subsets, {}, {})
+                    raw_vals = [subset[0].raw_value for subset in _subsets]
+
+                    if len(set(raw_vals)) != 1:
+                        raise ValueError("Encountered different reference values for different subsets: %s", raw_vals)
+
+                    ref_value = raw_vals[0]
+                    top_bit_mask = (1 << op_crf.bits()-1)
+                    if ref_value & top_bit_mask:
+                        ref_value = -(ref_value & ~top_bit_mask)
+
+                    overlay_descriptor = ElementDescriptor(descriptor.code, descriptor.length, descriptor.scale, ref_value, descriptor.significance, descriptor.unit)
+                    descriptor_overlay[descriptor.code] = overlay_descriptor
+                    continue
+
                 op_aaf = operators.get(OpCode.ADD_ASSOCIATED_FIELD, None)
                 if op_aaf is not None and descriptor.code != fxy2int("031021"):
                     # Don't apply to ASSOCIATED FIELD SIGNIFICANCE
                     # Use dummy descriptor 999999 for associated field, like Geo::BUFR and libbufr
                     dummy_descriptors = iter([ElementDescriptor(fxy2int("999999"), op_aaf.bits(), 0, 0, "ASSOCIATED FIELD", "NUMERIC")])
-                    vals = decode_compressed(bits, dummy_descriptors, n_subsets, {})
+                    vals = decode_compressed(bits, dummy_descriptors, n_subsets, {}, {})
                     for i,ss in enumerate(vals):
                         subsets[i].extend(ss)
 
@@ -448,28 +469,28 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                 if descriptor.count:
                     count = descriptor.count
                 else:
-                    raw = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets, {})
+                    raw = decode_compressed(bits, itertools.islice(descriptors, 1), n_subsets, {}, {})
                     count = raw[0][0].value
                 n_fields = descriptor.fields
                 field_descriptors = list(itertools.islice(descriptors, n_fields))
                 for _ in range(count):
-                    replication = decode_compressed(bits, iter(field_descriptors), n_subsets, operators)
+                    replication = decode_compressed(bits, iter(field_descriptors), n_subsets, operators, descriptor_overlay)
                     for subset_idx in range(n_subsets):
                         aggregations[subset_idx].append(replication[subset_idx])
                 for subset_idx in range(n_subsets):
                     subsets[subset_idx].append(aggregations[subset_idx])
             elif isinstance(descriptor, OperatorDescriptor):
                 op = descriptor.operator
-                if op.opcode in (1,2,4,7):
+                if op.opcode in (1,2,3,4,7):
                     if op.neutral():
                         del operators[op.opcode]
                     else:
                         op.check_conflict(operators)
                         operators[op.opcode] = op
                 else:
-                    raise NotImplementedError("Can only decode operators 201, 202, 204 and 207 for compressed BUFR data at the moment, please file an issue on GitHub")
+                    raise NotImplementedError("Can only decode operators 201-204 and 207 for compressed BUFR data at the moment, please file an issue on GitHub, found operator: 2%02d" %op.opcode)
             elif isinstance(descriptor, SequenceDescriptor):
-                comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets, operators)
+                comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets, operators, descriptor_overlay)
                 for i,subset in enumerate(comp):
                     subsets[i].extend(subset)
             else:
@@ -477,7 +498,7 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
         return subsets
 
     if compressed:
-        subsets = [BufrSubset(x) for x in decode_compressed(bits, iter(descriptors), n_subsets, {})]
+        subsets = [BufrSubset(x) for x in decode_compressed(bits, iter(descriptors), n_subsets, {}, {})]
     else:
         subsets = [BufrSubset(decode(bits, iter(descriptors), {}, {})) for _ in range(n_subsets)]
     return Section4(length, subsets)
