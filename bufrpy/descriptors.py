@@ -194,12 +194,10 @@ class ChangeTextWidth(Operator):
         return self.operand*8
 
     def neutral(self):
-        # The specification does not define a neutral value
-        return False
+        return self.operand == 0
 
     def check_conflict(self, operators):
-        # Neither is there any obvious conflict
-        pass
+        self._check_conflict(operators, (self.opcode,))
 
 class DescriptorTable(Mapping):
     """
