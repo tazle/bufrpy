@@ -121,8 +121,11 @@ class AddAssociatedField(Operator):
     def neutral(self):
         return self.operand == 0
 
+    def bits(self):
+        return self.operand
+
     def check_conflict(self, operators):
-        self._check_conflict(operators, (self.opcode))
+        self._check_conflict(operators, (self.opcode,))
 
 class SignifyCharacter(Operator):
     opcode = 5
