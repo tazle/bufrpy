@@ -1,6 +1,6 @@
 import unittest
 import bufrpy
-from .util import read_file, read_file_debug, flatten_descriptors
+from .util import read_file, read_file_all, read_file_debug, flatten_descriptors
 
 class TestReadBufr(unittest.TestCase):
     def test_sequence(self):
@@ -57,6 +57,11 @@ class TestReadBufr(unittest.TestCase):
             assert len(s.values[0]) == 3
             for vs in s.values[0]:
                 assert len(vs) == 2
+
+    def test_IOZX11(self):
+        msgs, errors = read_file_all("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/IOZX11_LFVW_060300.bufr")
+        assert len(msgs) == 10
+        assert len(errors) == 0
 
 def _check_equal(msg1, msg2):
     """
