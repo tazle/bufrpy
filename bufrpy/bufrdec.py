@@ -1,9 +1,9 @@
 from __future__ import print_function
 
-from bufrpy.util import ByteStream, ReadableStream, int2fxy
+from bufrpy.util import ByteStream, ReadableStream, int2fxy, fxy2int
 from bufrpy.descriptors import ElementDescriptor, OperatorDescriptor, ReplicationDescriptor, SequenceDescriptor, OpCode
 from bufrpy.template import Template
-from bufrpy.value import _decode_raw_value, _calculate_read_length, BufrSubset
+from bufrpy.value import _decode_raw_value, _calculate_read_length, BufrSubset, BufrValue
 import itertools
 from collections import namedtuple, defaultdict
 import re
