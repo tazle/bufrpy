@@ -16,4 +16,11 @@ class TestReadBufr(unittest.TestCase):
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
 
     def test_compressed_operators(self):
-        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003_compressed.bufr")
+        msg1 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
+        msg2 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003_compressed.bufr")
+
+        assert msg1.section1 == msg2.section1
+        assert msg1.section2 == msg2.section2
+        assert msg1.section3.descriptors == msg2.section3.descriptors
+        assert msg1.section4.subsets == msg2.section4.subsets
+        assert msg1.section5 == msg2.section5
