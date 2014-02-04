@@ -31,6 +31,17 @@ class TestReadBufr(unittest.TestCase):
         # Has operators 1, 2 and 4
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/associated.bufr")
 
+    def test_change_refval(self):
+        # Has operators 1 and 3
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/change_refval.bufr")
+
+    def test_compressed_change_refval(self):
+        # Has operators 1 and 3
+        msg1 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/change_refval.bufr")
+        msg2 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/change_refval_compressed.bufr")
+
+        _check_equal(msg1, msg2)
+
 def _check_equal(msg1, msg2):
     """
     Equality check that should match between compressed and uncompressed versions of a message.
