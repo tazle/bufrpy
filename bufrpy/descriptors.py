@@ -53,6 +53,12 @@ class Operator(_Operator):
             if opcode in operators:
                 raise OperatorConflict("Conflict with existing operator %d" %opcode)
 
+    def __eq__(self, other):
+        return self.opcode == other.opcode and self.operand == other.operand
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 class ChangeDataWidth(Operator):
     opcode = OpCode.CHANGE_DATA_WIDTH
     description = "Change data width"
