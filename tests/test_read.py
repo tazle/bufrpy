@@ -19,8 +19,19 @@ class TestReadBufr(unittest.TestCase):
         msg1 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
         msg2 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003_compressed.bufr")
 
-        assert msg1.section1 == msg2.section1
-        assert msg1.section2 == msg2.section2
-        assert msg1.section3.descriptors == msg2.section3.descriptors
-        assert msg1.section4.subsets == msg2.section4.subsets
-        assert msg1.section5 == msg2.section5
+        _check_equal(msg1, msg2)
+
+
+def _check_equal(msg1, msg2):
+    """
+    Equality check that should match between compressed and uncompressed versions of a message.
+
+    Skip section 0, because total length changes with compression
+    Skip parts of section 3, because compression flag changes
+    Skip parts of section 4, because its length changes with compression
+    """
+    assert msg1.section1 == msg2.section1
+    assert msg1.section2 == msg2.section2
+    assert msg1.section3.descriptors == msg2.section3.descriptors
+    assert msg1.section4.subsets == msg2.section4.subsets
+    assert msg1.section5 == msg2.section5
