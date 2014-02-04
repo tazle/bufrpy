@@ -16,11 +16,15 @@ class TestReadBufr(unittest.TestCase):
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
 
     def test_compressed_operators(self):
+        # Has operators 1, 2 and 7
         msg1 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003.bufr")
         msg2 = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/207003_compressed.bufr")
 
         _check_equal(msg1, msg2)
 
+    def test_208035(self):
+        # Has operator 8
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/208035.bufr")
 
 def _check_equal(msg1, msg2):
     """
