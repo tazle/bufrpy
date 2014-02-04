@@ -332,7 +332,7 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                     ref_value = Bits._readuint(bits, op_crf.bits(), bits.pos)
                     bits.pos += op_crf.bits()
                     top_bit_mask = (1 << op_crf.bits()-1)
-                    if refval & top_bit_mask:
+                    if ref_value & top_bit_mask:
                         ref_value = -(ref_value & ~top_bit_mask)
                     overlay_descriptor = ElementDescriptor(descriptor.code, descriptor.length, descriptor.scale, ref_value, descriptor.significance, descriptor.unit)
                     descriptor_overlay[descriptor.code] = overlay_descriptor
