@@ -42,6 +42,22 @@ class TestReadBufr(unittest.TestCase):
 
         _check_equal(msg1, msg2)
 
+    def test_delayed_repetition(self):
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/delayed_repetition.bufr")
+        assert len(msg.section4.subsets[0].values) == 2
+        assert len(msg.section4.subsets[0].values[0]) == 3
+        for vs in msg.section4.subsets[0].values[0]:
+            assert len(vs) == 2
+
+    def test_compressed_delayed_repetition(self):
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/delayed_repetition_compressed.bufr")
+        assert len(msg.section4.subsets) == 2
+        for s in msg.section4.subsets:
+            assert len(s.values) == 2
+            assert len(s.values[0]) == 3
+            for vs in s.values[0]:
+                assert len(vs) == 2
+
 def _check_equal(msg1, msg2):
     """
     Equality check that should match between compressed and uncompressed versions of a message.
