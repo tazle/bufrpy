@@ -458,7 +458,7 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                         op.check_conflict(operators)
                         operators[op.opcode] = op
                 else:
-                    raise NotImplementedError("Can only decode operators 201 and 202 for compressed BUFR data at the moment, please file an issue on GitHub")
+                    raise NotImplementedError("Can only decode operators 201, 202 and 207 for compressed BUFR data at the moment, please file an issue on GitHub")
             elif isinstance(descriptor, SequenceDescriptor):
                 comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets, operators)
                 for i,subset in enumerate(comp):
