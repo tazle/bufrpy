@@ -404,6 +404,15 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
         subsets = [[] for x in range(n_subsets)]
         for descriptor in descriptors:
             if isinstance(descriptor, ElementDescriptor):
+                op_aaf = operators.get(OpCode.ADD_ASSOCIATED_FIELD, None)
+                if op_aaf is not None and descriptor.code != fxy2int("031021"):
+                    # Don't apply to ASSOCIATED FIELD SIGNIFICANCE
+                    # Use dummy descriptor 999999 for associated field, like Geo::BUFR and libbufr
+                    dummy_descriptors = iter([ElementDescriptor(fxy2int("999999"), op_aaf.bits(), 0, 0, "ASSOCIATED FIELD", "NUMERIC")])
+                    vals = decode_compressed(bits, dummy_descriptors, n_subsets, {})
+                    for i,ss in enumerate(vals):
+                        subsets[i].extend(ss)
+
                 read_length = _calculate_read_length(descriptor, operators)
                 if descriptor.unit == 'CCITTIA5':
                     ref_value = Bits._readhex(bits, read_length, bits.pos)
@@ -451,14 +460,14 @@ def decode_section4(stream, descriptors, n_subsets=1, compressed=False):
                     subsets[subset_idx].append(aggregations[subset_idx])
             elif isinstance(descriptor, OperatorDescriptor):
                 op = descriptor.operator
-                if op.opcode in (1,2,7):
+                if op.opcode in (1,2,4,7):
                     if op.neutral():
                         del operators[op.opcode]
                     else:
                         op.check_conflict(operators)
                         operators[op.opcode] = op
                 else:
-                    raise NotImplementedError("Can only decode operators 201, 202 and 207 for compressed BUFR data at the moment, please file an issue on GitHub")
+                    raise NotImplementedError("Can only decode operators 201, 202, 204 and 207 for compressed BUFR data at the moment, please file an issue on GitHub")
             elif isinstance(descriptor, SequenceDescriptor):
                 comp = decode_compressed(bits, iter(descriptor.descriptors), n_subsets, operators)
                 for i,subset in enumerate(comp):
