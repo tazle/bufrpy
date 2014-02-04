@@ -7,6 +7,7 @@ class TestReadBufr(unittest.TestCase):
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/tempLow_200707271955.bufr")
 
     def test_replication_sequence(self):
+        # Also BUFR edition 4 message
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/1xBUFRSYNOP-ed4.bufr")
 
     def test_multiple_segments(self):
