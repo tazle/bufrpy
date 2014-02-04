@@ -27,6 +27,10 @@ class TestReadBufr(unittest.TestCase):
         # Has operator 8
         msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/208035.bufr")
 
+    def test_associated(self):
+        # Has operators 1, 2 and 4
+        msg = read_file("data/bt/B0000000000098013001.TXT", "data/bt/D0000000000098013001.TXT", "data/associated.bufr")
+
 def _check_equal(msg1, msg2):
     """
     Equality check that should match between compressed and uncompressed versions of a message.
