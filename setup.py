@@ -1,9 +1,22 @@
 from setuptools import setup
-import bufrpy
+import ast
+
+path = 'bufrpy/__init__.py'
+with open(path, 'rU') as file:
+    t = compile(file.read(), path, 'exec', ast.PyCF_ONLY_AST)
+    for node in t.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            name = node.targets[0]
+            if isinstance(name, ast.Name) and name.id == '__version__':
+                version = node.value.s
+                break
+    else:
+        raise ValueError("Could not determine software version")
+
 
 setup(name="bufrpy",
       packages=["bufrpy"],
-      version=bufrpy.__version__,
+      version=version,
       description="Pyre-Python BUFR decoder",
       url="https://github.com/tazle/bufrpy",
       author="Tuure Laurinolli / FMI",
