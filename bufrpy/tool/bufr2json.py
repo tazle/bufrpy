@@ -24,7 +24,7 @@ else:
         # Try reading as libbufr table
         table = libbufr.read_tables(codecs.open(sys.argv[1], 'rb', 'utf-8'))
 
-msg = bufrpy.bufrdec_file(open(bufr_fname, 'rb'), table)
+msg = bufrpy.decode_file(open(bufr_fname, 'rb'), table)
 out = json.dumps(bufrpy.to_json(msg))
 dec = bufrpy.from_json(json.loads(out))
 

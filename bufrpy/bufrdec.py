@@ -545,18 +545,18 @@ def decode_section5(stream):
         raise ValueError("Invalid end token: %s, expected: %s" %(data, END_TOKEN))
     return Section5(data)
 
-def bufrdec_file(f, b_table):
+def decode_file(f, b_table):
     """
     Decode BUFR message from a file into a :class:`.Message` object.
 
     :param file f: File that contains the bufr message
     :param Mapping|Template b_table: Either a mapping from BUFR descriptor codes to descriptors or a Template describing the message
     """
-    return bufrdec(ByteStream(f), b_table)
+    return decode(ByteStream(f), b_table)
 
 READ_VERSIONS=(3,4)
 
-def bufrdec_all(stream, b_table):
+def decode_all(stream, b_table):
     """
     Decode all BUFR messages from stream into a list of :class:`.Message` objects and a list of decoding errors.
     
@@ -592,14 +592,14 @@ def bufrdec_all(stream, b_table):
     errors = []
     while seek_past_bufr(stream):
         try:
-            msg = bufrdec(itertools.chain([b'B',b'U',b'F',b'R'], stream), b_table)
+            msg = decode(itertools.chain([b'B',b'U',b'F',b'R'], stream), b_table)
             messages.append(msg)
         except Exception as e:
             errors.append(e)
             pass
     return messages, errors
 
-def bufrdec(stream, b_table, skip_data=False):
+def decode(stream, b_table, skip_data=False):
     """ 
     Decode BUFR message from stream into a :class:`.Message` object.
 
@@ -637,7 +637,7 @@ if __name__ == '__main__':
     import sys
     b_table = read_libbufr_b_table(open(sys.argv[1], 'rb'))
     for fname in sys.argv[2:]:
-        msg = bufrdec(ByteStream(open(fname, 'rb')), b_table)
+        msg = decode(ByteStream(open(fname, 'rb')), b_table)
     def printval(val, indentation=0):
         print(" "*indentation, int2fxy(val.descriptor.code), val.value, val.descriptor.significance)
     def printvals(vals, indentation=0):

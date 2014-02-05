@@ -1,6 +1,6 @@
 def libbufr_compatible_rdt(msg):
     """
-    Convert bufrdec output to a format that is equivalent to python-bufr output
+    Convert bufrpy output to a format that is equivalent to python-bufr output
 
     :param bufrpy.Message msg: BUFR message to convert
     :return: Output similar to that of python-bufr

@@ -15,15 +15,15 @@ def _do_read(b_table_file, d_table_file, bufr_file, read_func):
 
 def read_file(b_table_file, d_table_file, bufr_file):
     return _do_read(b_table_file, d_table_file, bufr_file,
-                    lambda f, table: bufrpy.bufrdec_file(f, table))
+                    lambda f, table: bufrpy.decode_file(f, table))
 
 def read_file_all(b_table_file, d_table_file, bufr_file):
     return _do_read(b_table_file, d_table_file, bufr_file,
-                    lambda f, table: bufrpy.bufrdec_all(bufrpy.util.ByteStream(f), table))
+                    lambda f, table: bufrpy.decode_all(bufrpy.util.ByteStream(f), table))
 
 def read_file_debug(b_table_file, d_table_file, bufr_file):
     return _do_read(b_table_file, d_table_file, bufr_file,
-                    lambda f, table: bufrpy.bufrdec(bufrpy.util.ByteStream(f), table, skip_data=True))
+                    lambda f, table: bufrpy.decode(bufrpy.util.ByteStream(f), table, skip_data=True))
 
 def flatten_descriptors(descriptors):
     for d in descriptors:

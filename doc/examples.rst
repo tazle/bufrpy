@@ -41,7 +41,7 @@ RDT Contour Extraction
  if __name__ == '__main__':
 
      template = safnwc.read_template(open(sys.argv[1], 'rb'))
-     msg = bufrpy.bufrdec_file(open(sys.argv[2], 'rb'), template)
+     msg = bufrpy.decode_file(open(sys.argv[2], 'rb'), template)
 
      rings = to_rings(msg)
      wkt = to_wkt(rings)
