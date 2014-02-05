@@ -632,20 +632,3 @@ def decode(stream, b_table, skip_data=False):
 
 
     
-
-if __name__ == '__main__':
-    import sys
-    b_table = read_libbufr_b_table(open(sys.argv[1], 'rb'))
-    for fname in sys.argv[2:]:
-        msg = decode(ByteStream(open(fname, 'rb')), b_table)
-    def printval(val, indentation=0):
-        print(" "*indentation, int2fxy(val.descriptor.code), val.value, val.descriptor.significance)
-    def printvals(vals, indentation=0):
-        for val in vals:
-            if isinstance(val, list):
-                for mval in val:
-                    printvals(mval, indentation+2)
-                    print()
-            else:
-                printval(val, indentation)
-    #printvals(msg.section4.data)
