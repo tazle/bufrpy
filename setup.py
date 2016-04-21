@@ -15,7 +15,7 @@ with open(path, 'rU') as file:
 
 
 setup(name="bufrpy",
-      packages=["bufrpy"],
+      packages=["bufrpy", "bufrpy.template", "bufrpy.table", "bufrpy.tool"],
       version=version,
       description="Pyre-Python BUFR decoder",
       url="https://github.com/tazle/bufrpy",
